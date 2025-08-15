@@ -20,6 +20,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
+// ✅ Set URLs before building the app
+//var port = Environment.GetEnvironmentVariable("PORT") ?? "80";
+//builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -32,6 +36,8 @@ app.UseSwaggerUI(c =>
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+
 
 app.Run();
 
