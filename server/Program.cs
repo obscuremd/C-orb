@@ -37,6 +37,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMemoryCache();
+
+var redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION")
+    ?? builder.Configuration.GetConnectionString("RedisConnection");
+
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
