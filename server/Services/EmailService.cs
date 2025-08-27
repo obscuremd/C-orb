@@ -16,8 +16,6 @@ namespace Server.Utils
         private readonly string smtpUsername = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? "";
         private readonly string smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? "";
 
-        
-
         public async Task SendEmailAsync(string ToEmail, string subject, string body)
         {
             var builder = new BodyBuilder();
@@ -26,10 +24,10 @@ namespace Server.Utils
                 <html>
                 <body style='font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;'>
                     <div style='max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);'>
-                        <h2 style='color: #333333;'>Euro65</h2>
+                        <h2 style='color: #333333;'>C-Orb</h2>
                         <p style='font-size: 16px; color: #555555;'>{body}</p>
                         <hr style='border: none; border-top: 1px solid #eeeeee;' />
-                        <p style='font-size: 12px; color: #aaaaaa;'>You're receiving this email from Euro65 updates and notifications system.</p>
+                        <p style='font-size: 12px; color: #aaaaaa;'>You're receiving this email from C-Orb updates and notifications system.</p>
                     </div>
                 </body>
                 </html>
@@ -38,7 +36,7 @@ namespace Server.Utils
             builder.TextBody = body; // fallback for clients that don't support HTML
 
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Euro65", smtpUsername));
+            message.From.Add(new MailboxAddress("C-Orb", smtpUsername));
             message.To.Add(new MailboxAddress("", ToEmail));
             message.Subject = subject;
 

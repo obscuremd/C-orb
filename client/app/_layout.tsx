@@ -30,6 +30,10 @@ import { BaiJamjuree_700Bold } from "@expo-google-fonts/bai-jamjuree/700Bold";
 import { BaiJamjuree_700Bold_Italic } from "@expo-google-fonts/bai-jamjuree/700Bold_Italic";
 import CustomModal from "~/components/LocalComponents/CustomModal";
 import { ModalProvider, useModal } from "~/providers/ModalProvider";
+import { ClerkProvider } from "@clerk/clerk-expo";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
+import "react-native-reanimated";
+import "react-native-gesture-handler";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -74,7 +78,9 @@ export default function RootLayout() {
   }
   return (
     <ModalProvider>
-      <InnerLayout />
+      <ClerkProvider tokenCache={tokenCache}>
+        <InnerLayout />
+      </ClerkProvider>
     </ModalProvider>
   );
 }

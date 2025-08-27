@@ -7,11 +7,17 @@ import Swiper from "react-native-swiper";
 import { LinearGradient } from "expo-linear-gradient";
 import GradientButton from "~/components/LocalComponents/GradientButton";
 import { onboardingData } from "~/lib/constants";
+import { useClerk } from "@clerk/clerk-expo";
 
 export default function Welcome() {
+  const { isSignedIn } = useClerk();
   const swiperRef = useRef<Swiper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const isLastIndex = activeIndex === onboardingData.length - 1;
+
+  if (isSignedIn) {
+    router.push("/(main)/profile/settings");
+  }
 
   return (
     <SafeAreaView className="flex-1 p-4">

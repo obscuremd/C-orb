@@ -133,4 +133,16 @@ C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\b
 C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\MailKit.dll
 C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\MimeKit.dll
 C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\obj\Debug\net9.0\server.sourcelink.json
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\NRedisStack.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Pipelines.Sockets.Unofficial.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\StackExchange.Redis.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\bin\Debug\net9.0\Microsoft.Extensions.Caching.StackExchangeRedis.dll
 C:\Users\daniel\Desktop\02 Work\01 Coding\00 Work_Projects\02 WIP\C-orb\server\obj\Debug\net9.0\staticwebassets.upToDateCheck.txt

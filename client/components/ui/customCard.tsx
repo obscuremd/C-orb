@@ -14,9 +14,13 @@ interface props {
   description?: string;
   image?: string;
   profilePicture?: string;
+  direction?: "row" | "col";
+  spacing?: string;
 }
 
 export default function CustomCard({
+  direction = "col",
+  spacing = "gap-2",
   profilePicture,
   image,
   name,
@@ -29,27 +33,29 @@ export default function CustomCard({
   badgeText,
 }: props) {
   return (
-    <Card className="gap-2 p-4">
+    <Card className={`flex-${direction} ${spacing} p-4`}>
       {/* Header */}
       {(profilePicture || name || username) && (
-        <View className="flex-row items-center gap-1">
-          <LinearGradient
-            colors={["#0131A1", "#2BD3C6"]} // Border gradient
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{
-              padding: 3,
-              borderRadius: 50,
-              alignSelf: "flex-start",
-            }}
-          >
-            <Image
-              source={{
-                uri: profilePicture,
+        <View className={`flex-row items-center gap-1`}>
+          {profilePicture && (
+            <LinearGradient
+              colors={["#0131A1", "#2BD3C6"]} // Border gradient
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                padding: 3,
+                borderRadius: 50,
+                alignSelf: "flex-start",
               }}
-              className="w-10 h-10 rounded-full"
-            />
-          </LinearGradient>
+            >
+              <Image
+                source={{
+                  uri: profilePicture,
+                }}
+                className="w-10 h-10 rounded-full"
+              />
+            </LinearGradient>
+          )}
           <View className="gap-1">
             <Text className="font-bold text-primary text-body">{name}</Text>
             <Text className="text-primary text-caption">{username}</Text>

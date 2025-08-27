@@ -4,9 +4,6 @@ namespace server
 {
     public class UserRegistrationDTO
     {
-        // id
-        [Required]
-        public string Id { get; set; }
 
         // username
         [Required]
@@ -17,6 +14,13 @@ namespace server
         [Required]
         [MinLength(5, ErrorMessage = "Email cannot be shorter than 5 characters."),EmailAddress(ErrorMessage = "Invalid email address.")]
         public string Email { get; set; }
+
+        // password
+        [Required]
+        [MinLength(6, ErrorMessage = "Password must not be less than 6 digits")]
+        [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$",
+            ErrorMessage = "Password must contain at least one uppercase, one lowercase, one number, and one special character.")]
+        public string Password{ get; set; }
 
         // phone number
         [Required]

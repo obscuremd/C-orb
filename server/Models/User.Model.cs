@@ -2,11 +2,19 @@ using System.ComponentModel.DataAnnotations;
 
 namespace server.Models
 {
+    public class Otp
+    {
+        public int Id { get; set; }
+        public string Email { get; set; }
+        public int Code { get; set; }
+        public DateTime SentAt{ get; set; }
+    }
     public class User
     {
         public string Id { get; set; }
         public string Username { get; set; }
         public string Email { get; set; }
+        public string Password { get; set; }
         public string PhoneNumber { get; set; }
         public string ProfilePicture { get; set; }
         public string CoverPicture { get; set; }

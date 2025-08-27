@@ -17,6 +17,7 @@ import { useColorScheme } from "~/lib/useColorScheme";
 import { faker } from "@faker-js/faker";
 import { Separator } from "~/components/ui/separator";
 import GradientButton from "~/components/LocalComponents/GradientButton";
+import { router } from "expo-router";
 
 const tabs = [
   { label: "23 Posts", value: "23 Posts" },
@@ -63,8 +64,11 @@ export default function index() {
               <Text className="text-primary text-caption">@obscure</Text>
             </View>
           </View>
-          <Button variant="secondary">
-            <Text className="text-primary">Edit Profile</Text>
+          <Button
+            variant="secondary"
+            onPress={() => router.push("/(main)/profile/settings")}
+          >
+            <Text className="text-primary">Profile Settings</Text>
           </Button>
         </View>
 
