@@ -33,6 +33,14 @@ namespace server
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var ExistingOtp = _context.Otps.FirstOrDefault(u => u.Email == user.Email);
+
+            if (ExistingOtp != null)
+            {
+                _context.Otps.Remove(ExistingOtp);
+                await _context.SaveChangesAsync();
+            }
+
             var dbUser = _context.Users.FirstOrDefault(u => u.Email == user.Email);
 
             if (dbUser != null )
