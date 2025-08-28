@@ -1,14 +1,12 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Text, View } from "react-native";
 import { Button } from "~/components/ui/button";
 import InputOTP from "~/components/ui/input-otp";
 import GradientButton from "../GradientButton";
 import { X } from "lucide-react-native";
-import { getIconColor } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { useModal } from "~/providers/ModalProvider";
-import { useSignUp } from "@clerk/clerk-expo";
 import CustomAlert from "./CustomAlert";
 import { VerifyOtp } from "~/services/AuthServices";
 import { useGen } from "~/providers/GeneralProvider";
@@ -69,7 +67,11 @@ export default function Otp() {
       <Text className="font-light text-title2 text-primary">
         didn’t recieve OTP? Send Again
       </Text>
-      <GradientButton text="Verify" onClick={() => Verify()} />
+      {loading ? (
+        <ActivityIndicator />
+      ) : (
+        <GradientButton text="Verify" onClick={() => Verify()} />
+      )}
     </View>
   );
 }

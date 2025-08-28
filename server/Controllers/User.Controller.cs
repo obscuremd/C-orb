@@ -13,212 +13,177 @@ using Server.Utils;
 
 namespace server
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UserController : ControllerBase
+   [ApiController]
+[Route("api/[controller]")]
+public class UserController : ControllerBase
+{
+    private readonly AppDbContext _context;
+    private readonly PasswordHasher<User> _passwordHasher;
+    private readonly IDistributedCache _cache;
+    public UserController(AppDbContext context, IDistributedCache cache)
     {
-        private readonly AppDbContext _context;
-        private readonly PasswordHasher<User> _passwordHasher;
-        private readonly IDistributedCache _cache;
-        public UserController(AppDbContext context, IDistributedCache cache)
+        _context = context;
+        _passwordHasher = new PasswordHasher<User>();
+        _cache = cache;
+    }
+
+    [HttpPost("authenticate")]
+    public async Task<IActionResult> Authenticate([FromBody] UserLoginDto user)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        string email = user.Email.ToLower();
+
+        var ExistingOtp = _context.Otps.FirstOrDefault(u => u.Email == email);
+        if (ExistingOtp != null)
         {
-            _context = context;
-            _passwordHasher = new PasswordHasher<User>();
-            _cache = cache;
-        }
-
-        [HttpPost("authenticate")]
-        public async Task<IActionResult> Authenticate([FromBody] UserLoginDto user)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var ExistingOtp = _context.Otps.FirstOrDefault(u => u.Email == user.Email);
-
-            if (ExistingOtp != null)
-            {
-                _context.Otps.Remove(ExistingOtp);
-                await _context.SaveChangesAsync();
-            }
-
-            var dbUser = _context.Users.FirstOrDefault(u => u.Email == user.Email);
-
-            if (dbUser != null )
-            {
-                var result = _passwordHasher.VerifyHashedPassword(dbUser, dbUser.Password, user.Password);
-                if( result != PasswordVerificationResult.Success)
-                    return BadRequest(new { message = "password mismatch" });
-            }
-
-            var otpCode = new Random().Next(100000, 999999);
-            var subject = "Your Login code is:";
-            var body = $"Hello {user.Email}, \n\nYour Otp Code is: {otpCode}\nThis code will expire in 5 minutes.";
-
-            var _emailService = new MailService();
-            await _emailService.SendEmailAsync(user.Email, subject, body);
-            
-            var Otp = new Otp
-            {
-                Email = user.Email,
-                Code = otpCode,
-                SentAt = DateTime.UtcNow
-            };
-
-            _context.Otps.Add(Otp);
+            _context.Otps.Remove(ExistingOtp);
             await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Otp has been Sent successfully" });
         }
 
-        [HttpPost("authenticate-verify-otp")]
-        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto user, JwtService jwtService)
+        var dbUser = _context.Users.FirstOrDefault(u => u.Email == email);
+        if (dbUser != null)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            var result = _passwordHasher.VerifyHashedPassword(dbUser, dbUser.Password, user.Password);
+            if (result != PasswordVerificationResult.Success)
+                return BadRequest(new { message = "password mismatch" });
+        }
 
-            var UserOtp = await _context.Otps.FirstOrDefaultAsync(u => u.Email == user.Email);
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+        var otpCode = new Random().Next(100000, 999999);
+        var subject = "Your Login code is:";
+        var body = $"Hello {email}, \n\nYour Otp Code is: {otpCode}\nThis code will expire in 5 minutes.";
 
-            if (UserOtp == null)
-                return BadRequest(new { message = "otp or user not found" });
+        var _emailService = new MailService();
+        await _emailService.SendEmailAsync(email, subject, body);
 
-            if (user.Code != UserOtp.Code)
-                return BadRequest(new { message = "Otp Mismatch" });
+        var Otp = new Otp
+        {
+            Email = email,
+            Code = otpCode,
+            SentAt = DateTime.UtcNow
+        };
 
-            if ((DateTime.UtcNow - UserOtp.SentAt.ToUniversalTime()).TotalMinutes > 5)
-            {
-                _context.Otps.Remove(UserOtp);
-                await _context.SaveChangesAsync();
-                return BadRequest(new { message = "Otp expired" });
-            }
+        _context.Otps.Add(Otp);
+        await _context.SaveChangesAsync();
 
+        return Ok(new { message = "Otp has been Sent successfully" });
+    }
+
+    [HttpPost("authenticate-verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto user, JwtService jwtService)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        string email = user.Email.ToLower();
+
+        var UserOtp = await _context.Otps.FirstOrDefaultAsync(u => u.Email == email);
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (UserOtp == null)
+            return BadRequest(new { message = "otp or user not found" });
+
+        if (user.Code != UserOtp.Code)
+            return BadRequest(new { message = "Otp Mismatch" });
+
+        if ((DateTime.UtcNow - UserOtp.SentAt.ToUniversalTime()).TotalMinutes > 5)
+        {
             _context.Otps.Remove(UserOtp);
             await _context.SaveChangesAsync();
-
-            if (existingUser == null)
-                return Ok(new { message = "otp verification successfull", hasAccount = false });
-
-            var token = jwtService.GenerateToken(existingUser);
-
-            return Ok(new
-            {
-                message = "otp verification successfull",
-                hasAccount = true,
-                token
-            });
+            return BadRequest(new { message = "Otp expired" });
         }
 
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] UserRegistrationDTO user, JwtService jwtService)
+        _context.Otps.Remove(UserOtp);
+        await _context.SaveChangesAsync();
+
+        if (existingUser == null)
+            return Ok(new { message = "otp verification successfull", hasAccount = false });
+
+        var token = jwtService.GenerateToken(existingUser);
+
+        return Ok(new
         {
+            message = "otp verification successfull",
+            hasAccount = true,
+            token
+        });
+    }
 
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] UserRegistrationDTO user, JwtService jwtService)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            var existingUser = _context.Users.FirstOrDefault(u => u.Email == user.Email);
+        string email = user.Email.ToLower();
+        var existingUser = _context.Users.FirstOrDefault(u => u.Email == email);
 
-            if (existingUser != null)
-                return BadRequest(new { message = "User Already exists" });
+        if (existingUser != null)
+            return BadRequest(new { message = "User Already exists" });
 
-            // Generate Clerk-like ID
-            string customId = $"C_orb_user_{Guid.NewGuid().ToString("N").Substring(0, 26)}";
+        // Generate Clerk-like ID
+        string customId = $"C_orb_user_{Guid.NewGuid().ToString("N").Substring(0, 26)}";
 
-            var newUser = new User
-            {
-                Id = customId,
-                Username = user.Username,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                ProfilePicture = user.ProfilePicture,
-                CoverPicture = user.CoverPicture,
-                Bio = user.Bio,
-                Location = user.Location,
-                BadgePoints = 0,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            newUser.Password = _passwordHasher.HashPassword(newUser, user.Password);
-
-            _context.Users.Add(newUser);
-            await _context.SaveChangesAsync();
-
-            var token = jwtService.GenerateToken(newUser);
-
-            return Ok(new { message = "User Created Successfully",token });
-        }
-
-        [Authorize]
-        [HttpGet("me")]
-        public async Task<IActionResult> GetUser()
+        var newUser = new User
         {
-            // Extract user id (sub) from JWT claims
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value 
-             ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            Id = customId,
+            Username = user.Username,
+            Email = email,
+            PhoneNumber = user.PhoneNumber,
+            ProfilePicture = user.ProfilePicture,
+            CoverPicture = user.CoverPicture,
+            Bio = user.Bio,
+            Location = user.Location,
+            BadgePoints = 0,
+            CreatedAt = DateTime.UtcNow
+        };
 
+        newUser.Password = _passwordHasher.HashPassword(newUser, user.Password);
 
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized(new { message = "Invalid token" });
+        _context.Users.Add(newUser);
+        await _context.SaveChangesAsync();
 
+        var token = jwtService.GenerateToken(newUser);
 
-            //try getting user from cache
-            // var cachedUserBytes = await _cache.GetAsync(userId);
-            // if (cachedUserBytes != null)
-            // {
-            //     var cachedUser = JsonSerializer.Deserialize<User>(cachedUserBytes);
-            //     return Ok(new
-            //     {
-            //         message = "user found from cache",
-            //         user = new
-            //         {
-            //             cachedUser.Id,
-            //             cachedUser.Username,
-            //             cachedUser.Email,
-            //             cachedUser.PhoneNumber,
-            //             cachedUser.ProfilePicture,
-            //             cachedUser.CoverPicture,
-            //             cachedUser.Bio,
-            //             cachedUser.Location,
-            //             cachedUser.BadgePoints,
-            //             cachedUser.CreatedAt
-            //         }
-            //     });
-            // }
+        return Ok(new { message = "User Created Successfully", token });
+    }
 
-            // find user from database if its not in cache
-            var user = await _context.Users.FindAsync(userId);
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetUser()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
-            if (user == null)
-                return NotFound(new { message = "User not found" });
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized(new { message = "Invalid token" });
 
-            //serialize and store the user in cache for 5 hours
-            // var options = new DistributedCacheEntryOptions
-            // {
-            //     AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(5)
-            // };
+        var user = await _context.Users.FindAsync(userId);
 
-            // var userBytes = JsonSerializer.SerializeToUtf8Bytes(user);
-            // await _cache.SetAsync(userId, userBytes, options);
-            
+        if (user == null)
+            return NotFound(new { message = "User not found" });
 
-            return Ok(new
+        return Ok(new
+        {
+            message = "User Found",
+            user = new
             {
-                message = "User Found",
-                user = new
-                {
-                    user.Id,
-                    user.Username,
-                    user.Email,
-                    user.PhoneNumber,
-                    user.ProfilePicture,
-                    user.CoverPicture,
-                    user.Bio,
-                    user.Location,
-                    user.BadgePoints,
-                    user.CreatedAt
-                }
-            });
-        }
-
-    };
-    
+                user.Id,
+                user.Username,
+                user.Email,
+                user.PhoneNumber,
+                user.ProfilePicture,
+                user.CoverPicture,
+                user.Bio,
+                user.Location,
+                user.BadgePoints,
+                user.CreatedAt
+            }
+        });
+    }
 }
+
+        }
+
+    

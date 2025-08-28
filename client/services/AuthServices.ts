@@ -8,6 +8,16 @@ interface JwtPayload {
   exp: number;
   [key: string]: any;
 }
+interface RegisterParams {
+  Username: string;
+  Email: string;
+  PhoneNumber: string;
+  ProfilePicture?: string;
+  CoverPicture?: string;
+  Bio?: string;
+  Location?: string;
+  Password: string;
+}
 
 export async function Authenticate(
   email: string,
@@ -104,6 +114,57 @@ export async function VerifyOtp(
       status: "error",
       title: "Error Signing Up",
       message: "Seems to be an error from our end, try signing again",
+    };
+  }
+}
+
+export async function Register({
+  Username,
+  Email,
+  PhoneNumber,
+  ProfilePicture = "",
+  CoverPicture = "",
+  Bio = "",
+  Location = "",
+  Password,
+}: RegisterParams): Promise<{
+  status: "success" | "error";
+  title: string;
+  message: string;
+}> {
+  // Validate required fields
+  if (!Username || !Email || !PhoneNumber || !Password) {
+    return {
+      status: "error",
+      title: "Missing Fields",
+      message:
+        "Please fill in all required fields (Username, Email, PhoneNumber, Password).",
+    };
+  }
+
+  try {
+    const res = await axios.post(`${url}/register`, {
+      Username,
+      Email,
+      PhoneNumber,
+      ProfilePicture,
+      CoverPicture,
+      Bio,
+      Location,
+      Password,
+    });
+
+    return {
+      status: "success",
+      title: "Registration Successful",
+      message:
+        res.data.message || "Your account has been created successfully.",
+    };
+  } catch (err: any) {
+    return {
+      status: "error",
+      title: "Registration Failed",
+      message: err.response?.data?.message || "Something went wrong.",
     };
   }
 }
