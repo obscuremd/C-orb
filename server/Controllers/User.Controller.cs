@@ -88,14 +88,15 @@ namespace server
             await _context.SaveChangesAsync();
 
             if (existingUser == null)
-                return Ok(new { message = "otp verification successfull", user = false });
+                return Ok(new { message = "otp verification successfull", hasAccount = false });
 
             var token = jwtService.GenerateToken(existingUser);
 
             return Ok(new
             {
-                message = "success",
-                user = token
+                message = "otp verification successfull",
+                hasAccount = true,
+                token
             });
         }
 

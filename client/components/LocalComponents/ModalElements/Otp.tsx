@@ -8,22 +8,22 @@ import { X } from "lucide-react-native";
 import { getIconColor } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { useModal } from "~/providers/ModalProvider";
-import { VerifyOtpSignUp } from "~/utils/ClerkFunctions";
 import { useSignUp } from "@clerk/clerk-expo";
 import CustomAlert from "./CustomAlert";
+import { VerifyOtp } from "~/services/AuthServices";
+import { useGen } from "~/providers/GeneralProvider";
 
-export default function SignUpOtp() {
-  const { isLoaded, setActive, signUp } = useSignUp();
+export default function Otp() {
+  const { userLoginState } = useGen();
   const [code, setCode] = useState("");
   const { isDarkColorScheme } = useColorScheme();
   const { setModalVisible, setElement, setPosition } = useModal();
   const [loading, setLoading] = useState(false);
 
   const Verify = async () => {
-    if (!isLoaded || !signUp) return;
     setLoading(true);
     try {
-      const result = await VerifyOtpSignUp(signUp, isLoaded, setActive, code);
+      const result = await VerifyOtp(userLoginState.email, Number(code));
       if (result.status === "success") {
         setTimeout(() => {
           setElement(
@@ -36,7 +36,11 @@ export default function SignUpOtp() {
           setPosition("start");
         }, 2000);
         setModalVisible(false);
-        router.replace("/(main)/home");
+        if (result.hasAccount) {
+          router.replace("/(main)/home");
+        } else {
+          router.replace("/auth/registration");
+        }
       } else {
         Alert.alert(result.message);
       }

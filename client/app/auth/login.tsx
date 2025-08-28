@@ -1,4 +1,11 @@
-import { View, Text, Image, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import React, { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -8,26 +15,32 @@ import GradientButton from "~/components/LocalComponents/GradientButton";
 import { LinearGradient } from "expo-linear-gradient";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { useModal } from "~/providers/ModalProvider";
-import Otp from "~/components/LocalComponents/ModalElements/SignUpOtp";
-import { SignUp } from "~/utils/ClerkFunctions";
+import Otp from "~/components/LocalComponents/ModalElements/Otp";
 import { useSignUp } from "@clerk/clerk-expo";
-import SignUpOtp from "~/components/LocalComponents/ModalElements/SignUpOtp";
+import SignUpOtp from "~/components/LocalComponents/ModalElements/Otp";
 import CustomAlert from "~/components/LocalComponents/ModalElements/CustomAlert";
 import LoaderKitView from "react-native-loader-kit";
+import { Authenticate } from "~/services/AuthServices";
+import { useGen } from "~/providers/GeneralProvider";
 
 export default function index() {
-  const { isLoaded, signUp } = useSignUp();
-  const [emailAddress, setEmailAddress] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { isDarkColorScheme } = useColorScheme();
   const { setModalVisible, setElement, setPosition } = useModal();
   const [loading, setLoading] = useState(false);
+  const { setUserLoginState } = useGen();
 
-  async function handleSignUp() {
+  async function handleAuth() {
     setLoading(true);
     try {
-      const result = await SignUp(signUp, isLoaded, emailAddress, password);
+      const result = await Authenticate(email, password);
       if (result.status === "success") {
+        setUserLoginState((prev) => ({
+          ...prev,
+          email: email,
+          password: password,
+        }));
         setModalVisible(true);
         setElement(
           <CustomAlert
@@ -39,7 +52,7 @@ export default function index() {
         setPosition("start");
         setTimeout(() => {
           setPosition("center");
-          setElement(<SignUpOtp />);
+          setElement(<Otp />);
         }, 2000);
       } else if (result.status === "error") {
         setModalVisible(true);
@@ -64,7 +77,7 @@ export default function index() {
           source={{
             uri: "https://plus.unsplash.com/premium_photo-1661719880750-4c0de579cd09?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8ZnJpZW5kc3xlbnwwfHwwfHx8MA%3D%3D",
           }}
-          className="w-full h-[180px] mb-[-100px] rounded-3xl"
+          className="w-full h-[200px] mb-[-100px] rounded-3xl"
         />
         <LinearGradient
           colors={
@@ -86,7 +99,7 @@ export default function index() {
           placeholder="Email"
           aria-labelledby="inputLabel"
           aria-errormessage="inputError"
-          onChangeText={(text) => setEmailAddress(text)}
+          onChangeText={(text) => setEmail(text)}
         />
         <Input
           placeholder="Password"
@@ -96,38 +109,11 @@ export default function index() {
           onChangeText={(text) => setPassword(text)}
         />
       </View>
-      <View className="flex-row items-center justify-center w-full gap-4">
+      <View className="">
         {loading ? (
-          <LoaderKitView
-            style={{ width: 50, height: 50 }}
-            name={"BallPulse"}
-            animationSpeedMultiplier={1.0} // speed up/slow down animation, default: 1.0, larger is faster
-            color={"red"} // Optional: color can be: 'red', 'green',... or '#ddd', '#ffffff',...
-          />
+          <ActivityIndicator />
         ) : (
-          <>
-            <GradientButton
-              text="Login"
-              width={"50%"}
-              onClick={() => {
-                [
-                  setModalVisible(true),
-                  setElement(<Otp />),
-                  setPosition("center"),
-                ];
-              }}
-            />
-
-            <Button
-              variant={"secondary"}
-              className="w-[45%]"
-              onPress={() => handleSignUp()}
-            >
-              <Text className="font-light text-title2 text-primary">
-                Sign Up
-              </Text>
-            </Button>
-          </>
+          <GradientButton text="Continue" onClick={() => handleAuth()} />
         )}
       </View>
       <Link href={"/auth/forgot_password"}>
@@ -136,7 +122,7 @@ export default function index() {
         </Text>
       </Link>
 
-      <View className="flex-row items-center justify-center w-full gap-4">
+      {/* <View className="flex-row items-center justify-center w-full gap-4">
         <Separator />
         <Text className="font-semibold text-title2 text-primary">Or</Text>
         <Separator />
@@ -158,7 +144,7 @@ export default function index() {
             Continue with Apple
           </Text>
         </Button>
-      </View>
+      </View> */}
     </View>
   );
 }
@@ -166,7 +152,7 @@ export default function index() {
 const styles = StyleSheet.create({
   ImageGradient: {
     width: "100%",
-    height: 180,
+    height: 200,
     position: "absolute",
     top: 0,
   },

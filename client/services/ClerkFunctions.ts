@@ -1,5 +1,5 @@
 import { SignUpResource, SetActive } from "@clerk/types";
-import SignUpOtp from "../components/LocalComponents/ModalElements/SignUpOtp";
+import SignUpOtp from "../components/LocalComponents/ModalElements/Otp";
 
 export async function SignUp(
   signUp: SignUpResource | undefined,

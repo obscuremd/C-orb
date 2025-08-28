@@ -34,6 +34,7 @@ import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import "react-native-reanimated";
 import "react-native-gesture-handler";
+import { GeneralProvider } from "~/providers/GeneralProvider";
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -77,11 +78,13 @@ export default function RootLayout() {
     return null;
   }
   return (
-    <ModalProvider>
-      <ClerkProvider tokenCache={tokenCache}>
-        <InnerLayout />
-      </ClerkProvider>
-    </ModalProvider>
+    <GeneralProvider>
+      <ModalProvider>
+        <ClerkProvider tokenCache={tokenCache}>
+          <InnerLayout />
+        </ClerkProvider>
+      </ModalProvider>
+    </GeneralProvider>
   );
 }
 
