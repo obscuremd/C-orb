@@ -1,0 +1,131 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "server",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/User/register": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegistrationDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/User/{id}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserRegistrationDTO": {
+        "required": [
+          "email",
+          "id",
+          "location",
+          "phoneNumber",
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "username": {
+            "minLength": 5,
+            "type": "string"
+          },
+          "email": {
+            "minLength": 5,
+            "type": "string",
+            "format": "email"
+          },
+          "phoneNumber": {
+            "minLength": 5,
+            "pattern": "^\\+?[1-9]\\d{1,14}$",
+            "type": "string",
+            "format": "tel"
+          },
+          "profilePicture": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "coverPicture": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "bio": {
+            "maxLength": 500,
+            "minLength": 5,
+            "type": "string",
+            "nullable": true
+          },
+          "location": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "badgePoints": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}
