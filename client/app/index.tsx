@@ -1,8 +1,8 @@
-import { Redirect } from "expo-router";
-import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
-import { useGen } from "~/providers/GeneralProvider";
-import { GetUser } from "~/services/AuthServices";
+import { Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { useGen } from '@/providers/GeneralProvider';
+import { GetUser } from '@/services/AuthServices';
 
 export default function () {
   const [isSignedIn, setIsSignedIn] = useState<boolean | null>(null);
@@ -35,8 +35,8 @@ export default function () {
   }
 
   if (isSignedIn) {
-    return <Redirect href={"/(main)/home"} />;
+    return <Redirect href={'/(main)/home'} />;
   } else {
-    return <Redirect href={"/auth/splash"} />;
+    return <Redirect href={'/auth/splash'} />;
   }
 }

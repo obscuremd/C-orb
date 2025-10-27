@@ -1,8 +1,9 @@
-import axios from "axios";
-import * as SecureStore from "expo-secure-store";
-import { jwtDecode } from "jwt-decode";
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import { jwtDecode } from 'jwt-decode';
 
-const url = "https://c-orb.onrender.com/api/User";
+// const url = 'http://192.168.191.34:5184/api/User';
+const url = 'https://c-orb.onrender.com/api/User';
 
 interface JwtPayload {
   exp: number;
@@ -23,38 +24,38 @@ export async function Authenticate(
   email: string,
   password: string
 ): Promise<{
-  status: "success" | "error";
+  status: 'success' | 'error';
   title: string;
   message: string;
 }> {
-  if (email === "" || password === "") {
+  if (email === '' || password === '') {
     return {
-      status: "error",
-      title: "Missing Credientals",
-      message: "Your email or password seems to be missign",
+      status: 'error',
+      title: 'Missing Credentials',
+      message: 'Your email or password seems to be missing',
     };
   }
   try {
     const result = await axios.post(`${url}/authenticate`, { email, password });
     if (result.status === 200) {
       return {
-        status: "success",
-        title: "Otp Sent for authentication",
-        message: "Otp has been successfully sent to your email",
+        status: 'success',
+        title: 'Otp Sent for authentication',
+        message: 'Otp has been successfully sent to your email',
       };
     } else {
       return {
-        status: "error",
-        title: "Error Authenticating ",
+        status: 'error',
+        title: 'Error Authenticating ',
         message: result.data.message,
       };
     }
   } catch (error) {
-    console.log(error);
+    console.log(JSON.stringify(error, null, 2));
     return {
-      status: "error",
-      title: "Error Signing Up",
-      message: "Seems to be an error from our end, try signing again",
+      status: 'error',
+      title: 'Error Signing Up',
+      message: 'Seems to be an error from our end, try signing again',
     };
   }
 }
@@ -63,16 +64,16 @@ export async function VerifyOtp(
   email: string,
   code: number
 ): Promise<{
-  status: "success" | "error";
+  status: 'success' | 'error';
   title: string;
   message: string;
   hasAccount?: boolean;
 }> {
-  if (email === "" || !code) {
+  if (email === '' || !code) {
     return {
-      status: "error",
-      title: "Missing Credientals",
-      message: "Your email or password seems to be missing",
+      status: 'error',
+      title: 'Missing Credientals',
+      message: 'Your email or password seems to be missing',
     };
   }
   try {
@@ -84,36 +85,36 @@ export async function VerifyOtp(
     if (result.status === 200) {
       if (result.data.hasAccount) {
         try {
-          await SecureStore.setItemAsync("UserToken", result.data.token);
+          await SecureStore.setItemAsync('UserToken', result.data.token);
         } catch (error) {
           return {
-            status: "error",
-            title: "Error",
-            message: "Error Caching Token",
+            status: 'error',
+            title: 'Error',
+            message: 'Error Caching Token',
           };
         }
       }
       return {
-        status: "success",
-        title: "Otp Verified",
+        status: 'success',
+        title: 'Otp Verified',
         message: result.data.hasAccount
           ? "You're All ready to Go!!"
-          : "Seems you dont have an account with us yet!!",
+          : 'Seems you dont have an account with us yet!!',
         hasAccount: result.data.hasAccount,
       };
     } else {
       return {
-        status: "error",
-        title: "Error Authenticating ",
+        status: 'error',
+        title: 'Error Authenticating ',
         message: result.data.message,
       };
     }
   } catch (error) {
     console.log(error);
     return {
-      status: "error",
-      title: "Error Signing Up",
-      message: "Seems to be an error from our end, try signing again",
+      status: 'error',
+      title: 'Error Signing Up',
+      message: 'Seems to be an error from our end, try signing again',
     };
   }
 }
@@ -122,23 +123,22 @@ export async function Register({
   username,
   email,
   phoneNumber,
-  profilePicture = "",
-  coverPicture = "",
-  bio = "",
-  location = "",
+  profilePicture = '',
+  coverPicture = '',
+  bio = '',
+  location = '',
   password,
 }: RegisterParams): Promise<{
-  status: "success" | "error";
+  status: 'success' | 'error';
   title: string;
   message: string;
 }> {
   // Validate required fields
   if (!username || !email || !phoneNumber || !password || !bio || !location) {
     return {
-      status: "error",
-      title: "Missing Fields",
-      message:
-        "Please fill in all required fields (Username, Email, PhoneNumber, Password).",
+      status: 'error',
+      title: 'Missing Fields',
+      message: 'Please fill in all required fields (Username, Email, PhoneNumber, Password).',
     };
   }
 
@@ -155,30 +155,29 @@ export async function Register({
     });
     if (res.status === 200) {
       return {
-        status: "success",
-        title: "Registration Successful",
-        message:
-          res.data.message || "Your account has been created successfully.",
+        status: 'success',
+        title: 'Registration Successful',
+        message: res.data.message || 'Your account has been created successfully.',
       };
     } else {
       return {
-        status: "error",
-        title: "Error Signing Up",
+        status: 'error',
+        title: 'Error Signing Up',
         message: res.data.message,
       };
     }
   } catch (err: any) {
     console.log(err);
     return {
-      status: "error",
-      title: "Registration Failed",
-      message: "internal server error",
+      status: 'error',
+      title: 'Registration Failed',
+      message: 'internal server error',
     };
   }
 }
 
 export async function GetUser(): Promise<{ status: boolean; user?: User }> {
-  const token = await SecureStore.getItemAsync("UserToken");
+  const token = await SecureStore.getItemAsync('UserToken');
   if (!token) {
     return { status: false };
   }
@@ -193,19 +192,19 @@ export async function GetUser(): Promise<{ status: boolean; user?: User }> {
         if (result.status === 200) {
           return { status: true, user: result.data.user };
         } else {
-          await SecureStore.deleteItemAsync("UserToken");
+          await SecureStore.deleteItemAsync('UserToken');
           return { status: false };
         }
       } catch (error) {
-        await SecureStore.deleteItemAsync("UserToken");
+        await SecureStore.deleteItemAsync('UserToken');
         return { status: false };
       }
     } else {
-      await SecureStore.deleteItemAsync("UserToken");
+      await SecureStore.deleteItemAsync('UserToken');
       return { status: false };
     }
   } catch (error) {
-    await SecureStore.deleteItemAsync("UserToken");
+    await SecureStore.deleteItemAsync('UserToken');
     return { status: false };
   }
 }

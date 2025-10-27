@@ -4,11 +4,13 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Server.Utils;
+using DotNetEnv;
+
+// Load environment variables from .env file
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load environment variables from .env file
-DotNetEnv.Env.Load();
 
 // ✅ Configure JWT authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -82,6 +84,10 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+Console.WriteLine($"SMTP_SERVER: {Environment.GetEnvironmentVariable("SMTP_SERVER")}");
+Console.WriteLine($"SMTP_USERNAME: {Environment.GetEnvironmentVariable("SMTP_USERNAME")}");
+
 
 var app = builder.Build();
 

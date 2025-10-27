@@ -8,7 +8,7 @@ import Animated, {
   useDerivedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { cn } from '~/lib/utils';
+import { cn } from '@/lib/utils';
 
 function Progress({
   className,
@@ -22,8 +22,7 @@ function Progress({
   return (
     <ProgressPrimitive.Root
       className={cn('relative h-4 w-full overflow-hidden rounded-full bg-secondary', className)}
-      {...props}
-    >
+      {...props}>
       <Indicator value={value} className={indicatorClassName} />
     </ProgressPrimitive.Root>
   );
@@ -47,8 +46,7 @@ function Indicator({ value, className }: { value: number | undefined | null; cla
     return (
       <View
         className={cn('h-full w-full flex-1 bg-primary web:transition-all', className)}
-        style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
-      >
+        style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}>
         <ProgressPrimitive.Indicator className={cn('h-full w-full', className)} />
       </View>
     );
