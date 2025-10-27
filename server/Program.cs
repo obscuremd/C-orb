@@ -5,6 +5,8 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Server.Utils;
 using DotNetEnv;
+using System.Net.Sockets;
+
 
 // Load environment variables from .env file
 Env.Load();
@@ -87,6 +89,25 @@ builder.Services.AddSwaggerGen(c =>
 
 Console.WriteLine($"SMTP_SERVER: {Environment.GetEnvironmentVariable("SMTP_SERVER")}");
 Console.WriteLine($"SMTP_USERNAME: {Environment.GetEnvironmentVariable("SMTP_USERNAME")}");
+
+
+try
+{
+    Console.WriteLine("🧪 Testing SMTP connectivity...");
+    using (var client = new TcpClient())
+    {
+        var result = client.BeginConnect("smtp.gmail.com", 587, null, null);
+        var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(5));
+        if (!success)
+            Console.WriteLine("❌ Cannot connect to smtp.gmail.com:587 (connection timed out)");
+        else
+            Console.WriteLine("✅ Connected to smtp.gmail.com:587 successfully!");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️ SMTP test failed: {ex.Message}");
+}
 
 
 var app = builder.Build();
