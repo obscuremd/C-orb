@@ -87,10 +87,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-Console.WriteLine($"SMTP_SERVER: {Environment.GetEnvironmentVariable("SMTP_SERVER")}");
-Console.WriteLine($"SMTP_USERNAME: {Environment.GetEnvironmentVariable("SMTP_USERNAME")}");
-
-
 try
 {
     Console.WriteLine("🧪 Testing SMTP connectivity...");
