@@ -20,11 +20,13 @@ namespace server
         private readonly AppDbContext _context;
         private readonly PasswordHasher<User> _passwordHasher;
         private readonly IDistributedCache _cache;
-        public UserController(AppDbContext context, IDistributedCache cache)
+        private readonly MailService _mailService;
+        public UserController(AppDbContext context, IDistributedCache cache, MailService mailService)
         {
             _context = context;
             _passwordHasher = new PasswordHasher<User>();
             _cache = cache;
+            _mailService = mailService;
         }
 
         [HttpPost("authenticate")]
@@ -54,8 +56,7 @@ namespace server
             var subject = "Your Login code is:";
             var body = $"Hello {email}, \n\nYour Otp Code is: {otpCode}\nThis code will expire in 5 minutes.";
 
-            var _emailService = new MailService();
-            await _emailService.SendEmailAsync(email, subject, body);
+            await _mailService.SendEmailAsync(email, subject, body);
 
             var Otp = new Otp
             {

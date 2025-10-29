@@ -1,53 +1,66 @@
-using DotNetEnv;
-using MailKit.Net.Smtp;
+using Microsoft.Extensions.Configuration;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using MimeKit;
 
 namespace Server.Utils
 {
     public class MailService
     {
-        public MailService()
+        private readonly IConfiguration _config;
+        private readonly HttpClient _httpClient;
+
+        public MailService(IConfiguration config, HttpClient httpClient)
         {
-            Env.Load();
+            _config = config;
+            _httpClient = httpClient;
         }
 
-        private readonly string smtpServer = Environment.GetEnvironmentVariable("SMTP_SERVER") ?? "smtp.gmail.com";
-        private readonly int smtpPort = int.Parse(Environment.GetEnvironmentVariable("SMTP_PORT")?? "587");
-        private readonly string smtpUsername = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? "";
-        private readonly string smtpPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? "";
-
-        public async Task SendEmailAsync(string ToEmail, string subject, string body)
+        public async Task SendEmailAsync(string toEmail, string subject, string body)
         {
-            var builder = new BodyBuilder();
+            await SendUsingBrevoApi(toEmail, subject, body);
+        }
 
-            builder.HtmlBody = $@"
-                <html>
-                <body style='font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;'>
-                    <div style='max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);'>
-                        <h2 style='color: #333333;'>C-Orb</h2>
-                        <p style='font-size: 16px; color: #555555;'>{body}</p>
-                        <hr style='border: none; border-top: 1px solid #eeeeee;' />
-                        <p style='font-size: 12px; color: #aaaaaa;'>You're receiving this email from C-Orb updates and notifications system.</p>
-                    </div>
-                </body>
-                </html>
-            ";
+        private async Task SendUsingBrevoApi(string toEmail, string subject, string body)
+        {
+            var apiKey = _config["BREVO_API_KEY"];
+            var senderEmail = _config["EMAIL_FROM"] ?? "no-reply@yourdomain.com";
 
-            builder.TextBody = body; // fallback for clients that don't support HTML
+            _httpClient.DefaultRequestHeaders.Clear();
+            _httpClient.DefaultRequestHeaders.Add("api-key", apiKey);
+            _httpClient.DefaultRequestHeaders.Add("accept", "application/json");
 
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("C-Orb", smtpUsername));
-            message.To.Add(new MailboxAddress("", ToEmail));
-            message.Subject = subject;
 
-            message.Body = builder.ToMessageBody();
+            var emailData = new
+            {
+                sender = new { email = senderEmail, name = "C-Orb" },
+                to = new[] { new { email = toEmail } },
+                subject = subject,
+                htmlContent = $@"
+                    <html>
+                    <body style='font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;'>
+                        <div style='max-width: 600px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);'>
+                            <h2 style='color: #333333;'>C-Orb</h2>
+                            <p style='font-size: 16px; color: #555555;'>{body}</p>
+                            <hr style='border: none; border-top: 1px solid #eeeeee;' />
+                            <p style='font-size: 12px; color: #aaaaaa;'>You are receiving this email from C-Orb notifications system.</p>
+                        </div>
+                    </body>
+                    </html>
+                "
+            };
 
-            using var client = new SmtpClient();
-            await client.ConnectAsync(smtpServer, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(smtpUsername, smtpPassword);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
+            var json = JsonSerializer.Serialize(emailData);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
+            var response = await _httpClient.PostAsync("https://api.brevo.com/v3/smtp/email", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Brevo email failed: {response.StatusCode} — {errorBody}");
+            }
         }
     }
 }
