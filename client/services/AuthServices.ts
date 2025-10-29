@@ -110,7 +110,8 @@ export async function VerifyOtp(
       };
     }
   } catch (error) {
-    console.log(error);
+    console.log(JSON.stringify(error, null, 2));
+
     return {
       status: 'error',
       title: 'Error Signing Up',

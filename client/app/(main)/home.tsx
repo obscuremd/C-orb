@@ -1,11 +1,14 @@
 import { View, Text, Pressable, Image, FlatList } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FeedData, storyImages } from '@/lib/constants';
+import { storyImages } from '@/lib/constants';
 import CustomCard from '@/components/ui/customCard';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Send } from 'lucide-react-native';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { getPosts } from '@/services/PostServices';
+import { useModal } from '@/providers/ModalProvider';
+import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert';
 
 const tabs = [
   { label: 'For You', value: 'for-you' },
@@ -14,8 +17,29 @@ const tabs = [
 ];
 
 export default function index() {
+  const { setModalVisible, setElement, setPosition } = useModal();
   const [value, setValue] = useState<string>('for-you');
   const { isDarkColorScheme } = useColorScheme();
+
+  const [feedData, setFeedData] = useState<Feed[]>([]);
+  useEffect(() => {
+    async function getFeed() {
+      const res = await getPosts('all');
+      if (res.status === 'error' && res.data === null) {
+        setModalVisible(true);
+        setElement(
+          <CustomAlert variant="destructive" title={res.title} description={res.message} />
+        );
+        setPosition('start');
+        setTimeout(() => {
+          setModalVisible(false);
+        }, 5000);
+      } else {
+        setFeedData(res.data);
+      }
+    }
+    getFeed();
+  }, []);
 
   return (
     <View className="flex-1 items-center gap-8 p-4">
@@ -64,21 +88,21 @@ export default function index() {
 
         {/* Card Content */}
         <FlatList
-          data={FeedData}
+          data={feedData}
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item, index) => `${item}-${index}`}
           contentContainerStyle={{ gap: 16 }}
           renderItem={({ item }) => (
             <CustomCard
-              profilePicture={item.profilePicture}
-              image={item.image}
-              name={item.name}
-              username={item.username}
+              profilePicture={item.user.profilePicture}
+              image={item.postUrl}
+              name={item.location}
+              username={item.user.username}
               description={item.description}
               button1={
                 <Button variant={'secondary'} className="flex-row items-center gap-1">
                   <Heart size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-                  <Text className="text-body text-primary">{item.likes}k</Text>
+                  <Text className="text-body text-primary">{item.likeCount}</Text>
                 </Button>
               }
               button2={

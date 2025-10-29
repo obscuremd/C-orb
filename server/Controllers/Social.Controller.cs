@@ -115,6 +115,11 @@ namespace server
                 var watchPostIds = user.WatchHistory.Select(h => h.PostId).ToList();
                 query = query.Where(p => watchPostIds.Contains(p.Id));
             }
+            // case 5: return all posts sorted by date
+            else if (param == "all")
+            {
+                // no where filter — just apply sorting below
+            }
 
             var skip = (page - 1) * limit;
             var posts = await query
