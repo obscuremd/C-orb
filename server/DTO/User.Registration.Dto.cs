@@ -9,6 +9,10 @@ namespace server
         [Required]
         [MinLength(5, ErrorMessage = "Username cannot be shorter than 5 characters.")]
         public string Username { get; set; }
+        // username
+        [Required]
+        [MinLength(5, ErrorMessage = "Fullname cannot be shorter than 5 characters.")]
+        public string Fullname { get; set; }
 
         // email
         [Required]

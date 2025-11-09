@@ -40,14 +40,24 @@ namespace server
             var newPost = new Post
             {
                 Description = postDto.Description,
-                PostUrl = postDto.PostUrl,
                 Location = postDto.Location,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
+                PostType = postDto.PostType.ToLower(),
                 UserId = userId,
                 User = user,
-                Tags = selectedTags
+                Tags = selectedTags,
             };
+
+            // ✅ Add Media if provided
+            if (postDto.Media != null && postDto.Media.Any())
+            {
+                newPost.Media = postDto.Media.Select(m => new PostMedia
+                {
+                    Url = m.Url,
+                    MediaType = m.MediaType
+                }).ToList();
+            }
 
             await _context.Posts.AddAsync(newPost);
             await _context.SaveChangesAsync();
@@ -59,7 +69,7 @@ namespace server
                 {
                     newPost.Id,
                     newPost.Description,
-                    newPost.PostUrl,
+                    Media = newPost.Media.Select(m => new { m.Url, m.MediaType }),
                     newPost.Location,
                     newPost.CreatedAt,
                     newPost.UserId
@@ -88,6 +98,8 @@ namespace server
                 .Include(p => p.User)
                 .Include(p => p.Comments)
                 .Include(p => p.Engagement)
+                .Include(p => p.Media)
+                .Where(p => p.PostType == "post")
                 .AsQueryable();
 
             // case 1: logged users posts
@@ -130,12 +142,13 @@ namespace server
                 {
                     User = new
                     {
+                        p.User.Fullname,
                         p.User.Username,
                         p.User.ProfilePicture
                     },
                     p.Id,
                     p.Description,
-                    p.PostUrl,
+                    Media = p.Media.Select(m => new { m.Url, m.MediaType }),
                     p.Location,
                     p.CreatedAt,
                     commentCount = p.Comments.Count(),
@@ -149,7 +162,101 @@ namespace server
             if (posts == null || posts.Count == 0)
                 return BadRequest(new { message = "posts not found" });
 
-            return Ok(new { message = "posts found",page, totalPages, totalPosts, posts });
+            return Ok(new { message = "posts found", page, totalPages, totalPosts, posts });
+        }
+        
+        [Authorize]
+        [HttpGet("get-stories")]
+        public async Task<IActionResult> GetStories(
+            [FromQuery] string param,
+            [FromQuery] int limit = 10,
+            [FromQuery] int page = 1,
+            [FromQuery] bool includeExpired = false
+            )
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "invalid Token" });
+
+            var user = await _context.Users
+                                .Include(u => u.WatchHistory)
+                                .Include(u => u.Following)
+                                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return BadRequest(new { message = "user not found" });
+
+            var query = _context.Posts
+                .Include(p => p.User)
+                .Include(p => p.Comments)
+                .Include(p => p.Engagement)
+                .Include(p => p.Media)
+                .Where(p => p.PostType == "story")
+                .AsQueryable();
+
+            var twentyFourHoursAgo = DateTime.UtcNow.AddHours(-24);
+
+            // case 1: logged users posts
+            if (param == "mine")
+            {
+                query = query.Where(p => p.UserId == userId);
+                if (!includeExpired)
+                {
+                    query = query.Where(p => p.CreatedAt >= twentyFourHoursAgo);
+                }
+            }
+            // case 2: another users posts
+            else if (param.StartsWith("user:"))
+            {
+                var targetUserId = param.Split(":")[1];
+                query = query.Where(p => p.UserId == targetUserId)
+                                .Where(p => p.CreatedAt >= twentyFourHoursAgo);;
+            }
+            // case 3: feed posts
+            else if (param == "feed")
+            {
+                var userTagIds = user.Tags.Select(t => t.Id).ToList();
+                var watchPostIds = user.WatchHistory.Select(w => w.PostId).ToList();
+
+                query = query.Where(p => p.Tags.Any(t => userTagIds.Contains(t.Id) && !watchPostIds.Contains(p.Id)))
+                                .Where(p => p.CreatedAt >= twentyFourHoursAgo);;
+            }
+            // case 4: return all posts sorted by date
+            else if (param == "all")
+            {
+                // no where filter — just apply sorting below
+            }
+
+            var skip = (page - 1) * limit;
+            var stories = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(limit)
+                .Select(p => new
+                {
+                    User = new
+                    {
+                        p.User.Username,
+                        p.User.ProfilePicture
+                    },
+                    p.Id,
+                    p.Description,
+                    Media = p.Media.Select(m => new { m.Url, m.MediaType }),
+                    p.Location,
+                    p.CreatedAt,
+                    commentCount = p.Comments.Count(),
+                    likeCount = p.Engagement.Where(e => e.Liked == true).Count(),
+                    views = p.UserId == userId ? p.Engagement.Count() : (int?)null,
+                }).ToListAsync();
+
+            var totalStories = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalStories / (double)limit);
+
+            if (stories == null || stories.Count == 0)
+                return BadRequest(new { message = "stories not found" });
+
+            return Ok(new { message = "stories found",page, totalPages, totalStories, stories });
         }
 
         [Authorize]
@@ -203,7 +310,7 @@ namespace server
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "Invalid Token" });
 
-            var history =await  _context.Histories.FirstOrDefaultAsync(h => h.UserId == userId && h.PostId == postId);
+            var history = await _context.Histories.FirstOrDefaultAsync(h => h.UserId == userId && h.PostId == postId);
 
             if (history == null)
             {
@@ -225,6 +332,125 @@ namespace server
 
             await _context.SaveChangesAsync();
             return Ok(new { message = liked ? "Post liked" : "Like removed" });
+        }
+
+        [Authorize]
+        [HttpPost("comment/{postId}")]
+        public async Task<IActionResult> CreateComment(int postId, [FromBody] CommentDto request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "Invalid Token" });
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var post = await _context.Posts.FirstOrDefaultAsync(p => p.Id == postId);
+
+
+            if (user == null)
+                return BadRequest(new { message = "user not found" });
+
+            if (post == null)
+                return BadRequest(new { message = "post not found" });
+
+            Comment parentComment = null;
+
+            if (request.ParentCommentId.HasValue)
+            {
+                parentComment = await _context.Comments.FirstOrDefaultAsync(c => c.Id == request.ParentCommentId);
+                if (parentComment == null)
+                    return BadRequest(new { message = "parent comment does not exist" });
+            }
+
+            var newComment = new Comment
+            {
+                PostId = postId,
+                UserId = userId,
+                ParentCommentId = request.ParentCommentId,
+                Content = request.Content,
+                CreatedAt = DateTime.UtcNow,
+
+            };
+
+            await _context.Comments.AddAsync(newComment);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "comment created",
+                comment = new
+                {
+                    newComment.Id,
+                    newComment.Content,
+                    newComment.PostId,
+                    newComment.ParentCommentId,
+                    newComment.CreatedAt
+                }
+            });
+        }
+
+        [Authorize]
+        [HttpGet("comment")]
+        public async Task<IActionResult> GetComments(
+            [FromQuery] string type,
+            [FromQuery] int Id,
+            [FromQuery] int limit = 10,
+            [FromQuery] int page = 1)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "Invalid Token" });
+
+            IQueryable<Comment> query = _context.Comments
+                                        .Include(c => c.User)
+                                        .Include(c => c.Replies)
+                                            .ThenInclude(r => r.User)
+                                        .AsQueryable();
+
+            if (type == "comments")
+            {
+                query = query.Where(c => c.PostId == Id);
+            }
+            else if (type == "replies")
+            {
+                query = query.Where(c => c.ParentCommentId == Id && c.ParentCommentId == null);
+            }
+            else
+            {
+                return BadRequest(new { message = "comments not found" });
+            }
+
+             var skip = (page - 1) * limit;
+            var total = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(total / (double)limit);
+
+            var comments = await query
+                            .OrderByDescending(c => c.CreatedAt)
+                            .Skip(skip)
+                            .Take(limit)
+                            .Select(c => new
+                            {
+                                c.Id,
+                                c.Content,
+                                c.CreatedAt,
+                                user = new
+                                {
+                                    c.User.Username,
+                                    c.User.ProfilePicture,
+                                    c.User.Id
+                                },
+                                replyCount = c.Replies.Count() 
+                            })
+                            .ToListAsync();
+
+            return Ok(new
+            {
+                message = "Comments found",
+                page,
+                totalPages,
+                total,
+                comments
+            });
+
         }
     }
 }

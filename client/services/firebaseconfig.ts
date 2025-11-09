@@ -1,4 +1,6 @@
-import { initializeApp } from "firebase/app";
+// firebase/FirebaseConfig.ts
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_KEY,
@@ -10,16 +12,15 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENTID,
 };
 
-// Check if all environment variables are set
-const validateFirebaseConfig = (config: Record<string, string | undefined>) => {
-  Object.entries(config).forEach(([key, value]) => {
-    if (!value) {
-      console.warn(`Missing environment variable for Firebase config: ${key}`);
-    }
-  });
-};
+// ✅ Useful for debugging missing .env values
+Object.entries(firebaseConfig).forEach(([key, value]) => {
+  if (!value) console.warn(`Missing Firebase env value: ${key}`);
+});
 
-validateFirebaseConfig(firebaseConfig);
+// ✅ Prevent initializing Firebase more than once
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firebase
-export const app = initializeApp(firebaseConfig);
+// ✅ Create storage instance ONCE
+export const storage = getStorage(app);
+
+export default app;

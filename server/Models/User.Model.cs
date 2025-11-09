@@ -13,6 +13,7 @@ namespace server.Models
     {
         public string Id { get; set; }
         public string Username { get; set; }
+        public string Fullname { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
         public string PhoneNumber { get; set; }
@@ -28,9 +29,9 @@ namespace server.Models
 
         // Social Media Relationships
         public ICollection<User> Following { get; set; } = new List<User>();
+        public ICollection<User> Followers { get; set; } = new List<User>();
         public ICollection<Post> Posts { get; set; } = new List<Post>();
         public ICollection<History> WatchHistory { get; set; } = new List<History>();
-        public ICollection<Story> Stories { get; set; } = new List<Story>();
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
         // Conversation Relationships (split for User1 and User2)

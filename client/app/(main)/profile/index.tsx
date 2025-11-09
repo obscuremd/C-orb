@@ -1,7 +1,15 @@
-import { View, Text, Pressable, Image, FlatList, StyleSheet, ImageBackground } from 'react-native';
-import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  FlatList,
+  StyleSheet,
+  ImageBackground,
+  ActivityIndicator,
+} from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FeedData, storyImages } from '@/lib/constants';
 import CustomCard from '@/components/ui/customCard';
 import { Button } from '@/components/ui/button';
 import { Globe, Heart, MapPin, MessageCircle, Send } from 'lucide-react-native';
@@ -10,6 +18,10 @@ import { faker } from '@faker-js/faker';
 import { Separator } from '@/components/ui/separator';
 import GradientButton from '@/components/LocalComponents/GradientButton';
 import { router } from 'expo-router';
+import { getPosts } from '@/services/PostServices';
+import { useModal } from '@/providers/ModalProvider';
+import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert';
+import { GetUser } from '@/services/AuthServices';
 
 const tabs = [
   { label: '23 Posts', value: '23 Posts' },
@@ -18,8 +30,53 @@ const tabs = [
 ];
 
 export default function index() {
+  const { setModalVisible, setElement, setPosition } = useModal();
+
   const [value, setValue] = useState<string>('23 Posts');
   const { isDarkColorScheme } = useColorScheme();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
+  const [feedData, setFeedData] = useState<Feed[]>([]);
+
+  const [user, setUser] = useState<User | undefined>(undefined);
+
+  const fetchFeed = async () => {
+    try {
+      const res = await getPosts('mine');
+      if (res.status === 'error' || res.data.length === 0) {
+        setModalVisible(true);
+        setElement(
+          <CustomAlert variant="destructive" title={res.title} description={res.message} />
+        );
+        setPosition('start');
+        setTimeout(() => setModalVisible(false), 5000);
+      } else {
+        setFeedData(res.data);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  async function fetchUser() {
+    const response = await GetUser();
+    setUser(response.user);
+  }
+
+  useEffect(() => {
+    setLoading(true);
+    fetchFeed().finally(() => setLoading(false));
+    fetchUser();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchFeed();
+    setRefreshing(false);
+  };
 
   return (
     <View className="flex-1 items-center gap-8 p-4">
@@ -44,14 +101,12 @@ export default function index() {
         <View className="w-full flex-row items-center justify-between">
           <View className="flex-row items-center gap-1">
             <Image
-              source={{
-                uri: faker.image.avatar(),
-              }}
+              source={user?.profilePicture ? { uri: user.profilePicture } : undefined}
               className="h-10 w-10 rounded-full"
             />
             <View className="gap-1">
-              <Text className="text-body font-bold text-primary">Erhenede Mudiaga</Text>
-              <Text className="text-caption text-primary">@obscure</Text>
+              <Text className="text-body font-bold text-primary">{user?.email}</Text>
+              <Text className="text-caption text-primary">@{user?.username}</Text>
             </View>
           </View>
           <Button variant="secondary" onPress={() => router.push('/(main)/profile/settings')}>
@@ -73,9 +128,7 @@ export default function index() {
         </View>
 
         {/* profile description */}
-        <Text className="text-caption text-primary">
-          Content Creator | Affiliate Marketer | I talk about design and how to make money.
-        </Text>
+        <Text className="text-caption text-primary">{user?.bio}</Text>
 
         {/* Location and Website */}
         <View className="flex-row items-center gap-2">
@@ -113,37 +166,45 @@ export default function index() {
         </View>
 
         {/* Card Content */}
-        <FlatList
-          data={FeedData}
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item, index) => `${item}-${index}`}
-          contentContainerStyle={{ gap: 16 }}
-          renderItem={({ item }) => (
-            <CustomCard
-              profilePicture={item.profilePicture}
-              image={item.image}
-              name={item.name}
-              username={item.username}
-              description={item.description}
-              button1={
-                <Button variant={'secondary'} className="flex-row items-center gap-1">
-                  <Heart size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-                  <Text className="text-body text-primary">{item.likes}k</Text>
-                </Button>
-              }
-              button2={
-                <Button variant={'secondary'}>
-                  <MessageCircle size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-                </Button>
-              }
-              button3={
-                <Button variant={'secondary'}>
-                  <Send size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-                </Button>
-              }
-            />
-          )}
-        />
+        {loading ? (
+          <ActivityIndicator />
+        ) : feedData.length === 0 ? (
+          <Text>No Posts found</Text>
+        ) : (
+          <FlatList
+            data={feedData}
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, index) => `${item}-${index}`}
+            contentContainerStyle={{ gap: 16, paddingBottom: 150 }}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            renderItem={({ item }) => (
+              <CustomCard
+                profilePicture={item.user.profilePicture}
+                image={item.postUrl}
+                name={item.user.username}
+                username={item.location}
+                description={item.description}
+                button1={
+                  <Button variant={'secondary'} className="flex-row items-center gap-1">
+                    <Heart size={16} color={isDarkColorScheme ? 'white' : 'black'} />
+                    <Text className="text-body text-primary">{item.likeCount}</Text>
+                  </Button>
+                }
+                button2={
+                  <Button variant={'secondary'}>
+                    <MessageCircle size={16} color={isDarkColorScheme ? 'white' : 'black'} />
+                  </Button>
+                }
+                button3={
+                  <Button variant={'secondary'}>
+                    <Send size={16} color={isDarkColorScheme ? 'white' : 'black'} />
+                  </Button>
+                }
+              />
+            )}
+          />
+        )}
       </View>
     </View>
   );

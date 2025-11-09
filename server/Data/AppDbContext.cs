@@ -10,9 +10,9 @@ namespace server.Models
         public DbSet<User> Users { get; set; }
         public DbSet<Otp> Otps { get; set; }
         public DbSet<Post> Posts { get; set; }
+        public DbSet<PostMedia> PostMedias { get; set; }
         public DbSet<History> Histories { get; set; }
         public DbSet<Tag>Tags{ get; set; }
-        public DbSet<Story> Stories { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Conversation> Conversations { get; set; }
         public DbSet<Message> Messages { get; set; }
@@ -37,6 +37,11 @@ namespace server.Models
                 .WithMany(u => u.Posts)
                 .HasForeignKey(p => p.UserId);
 
+            modelBuilder.Entity<PostMedia>()
+                .HasOne(pm => pm.Post)
+                .WithMany(p => p.Media)
+                .HasForeignKey(pm => pm.PostId);
+
             modelBuilder.Entity<History>() //defining the relationship between users and history
                 .HasOne(h => h.User)
                 .WithMany(u => u.WatchHistory)
@@ -58,21 +63,10 @@ namespace server.Models
             // ✅ Seed initial tags
             modelBuilder.SeedTags();
 
-            modelBuilder.Entity<Story>()
-                .HasOne(s => s.User)
-                .WithMany(u => u.Stories)
-                .HasForeignKey(s => s.UserId);
-
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.Post)
                 .WithMany(p => p.Comments)
                 .HasForeignKey(c => c.PostId)
-                .IsRequired(false);
-
-            modelBuilder.Entity<Comment>()
-                .HasOne(c => c.Story)
-                .WithMany(s => s.Comments)
-                .HasForeignKey(c => c.StoryId)
                 .IsRequired(false);
 
             modelBuilder.Entity<Comment>()

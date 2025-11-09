@@ -135,6 +135,7 @@ namespace server
             {
                 Id = customId,
                 Username = user.Username,
+                Fullname = user.Fullname,
                 Email = email,
                 PhoneNumber = user.PhoneNumber,
                 ProfilePicture = user.ProfilePicture,
@@ -166,7 +167,7 @@ namespace server
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "Invalid token" });
 
-            var user = await _context.Users.Include(u => u.Posts).FirstOrDefaultAsync(u =>u.Id == userId);
+            var user = await _context.Users.Include(u => u.Tags).Include(u => u.Posts).FirstOrDefaultAsync(u =>u.Id == userId);
 
             if (user == null)
                 return NotFound(new { message = "User not found" });
@@ -178,6 +179,7 @@ namespace server
                 {
                     user.Id,
                     user.Username,
+                    user.Fullname,
                     user.Email,
                     user.PhoneNumber,
                     user.ProfilePicture,
@@ -186,9 +188,186 @@ namespace server
                     user.Location,
                     user.BadgePoints,
                     user.CreatedAt,
-                    postCount = user.Posts.Count()
+                    user.Tags,
+                    postCount = user.Posts.Count(),
+                    followersCount = user.Followers.Count(),
+                    followingCount = user.Following.Count()
                 }
             });
+        }
+
+        [Authorize]
+        [HttpGet("get/{type}")]
+        public async Task<IActionResult> GetUserParams(string type, [FromQuery] string queryUserId, [FromQuery] int page = 1, [FromQuery] int limit = 20)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "invalid token" });
+
+            var user = await _context.Users
+                        .Include(u => u.Followers)
+                        .Include(u => u.Following)
+                        .Include(u => u.WatchHistory)
+                        .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return NotFound(new { message = "user not found" });
+
+            // pagination calculation
+            var skip = (page - 1) * limit;
+
+
+            if (queryUserId != userId)
+            {
+                var requestedUser = await _context.Users.Include(u => u.Followers).Include(u => u.Following).FirstOrDefaultAsync(u => u.Id == queryUserId);
+                if (requestedUser == null)
+                    return NotFound(new { message = "Requested User not found" });
+
+                if (type == "followings")
+                    return Ok(new
+                    {
+                        message = $"user {requestedUser.Username} followings found",
+                        totalFollowing = requestedUser.Following.Count,
+                        page,
+                        totalPages = (int)Math.Ceiling(requestedUser.Following.Count / (double)limit),
+                        users = requestedUser.Following.Skip(skip).Take(limit).Select(u => new
+                        {
+                            u.Id,
+                            u.Fullname,
+                            u.Username,
+                            u.ProfilePicture,
+                            following = user.Following.Any(f => f.Id == u.Id)
+                        })
+                    });
+                else if (type == "followers")
+                    return Ok(new
+                    {
+                        message = $"user {requestedUser.Username} followers found",
+                        totalFollowers = requestedUser.Followers.Count,
+                        page,
+                        totalPages = (int)Math.Ceiling(requestedUser.Followers.Count / (double)limit),
+                        users = requestedUser.Followers.Skip(skip).Take(limit).Select(u => new
+                        {
+                            u.Id,
+                            u.Fullname,
+                            u.Username,
+                            u.ProfilePicture,
+                            following = user.Following.Any(f => f.Id == u.Id)
+                        })
+                    });
+                else
+                {
+                    return BadRequest(new { message = "Please input a valid param (followers or followings)" });
+                }
+            }
+
+            else if (type == "followings")
+                return Ok(new
+                {
+                    message = $"your followings found",
+                    totalFollowing = user.Following.Count,
+                    page,
+                    totalPages = (int)Math.Ceiling(user.Following.Count / (double)limit),
+                    users = user.Following.Skip(skip).Take(limit).Select(u => new
+                    {
+                        u.Id,
+                        u.Fullname,
+                        u.Username,
+                        u.ProfilePicture,
+                        following = user.Following.Any(f => f.Id == u.Id)
+                    })
+                });
+            else if (type == "followers")
+                return Ok(new
+                {
+                    message = $"your followers found",
+                    totalFollowers = user.Followers.Count,
+                    page,
+                    totalPages = (int)Math.Ceiling(user.Followers.Count / (double)limit),
+                    users = user.Followers.Skip(skip).Take(limit).Select(u => new
+                    {
+                        u.Id,
+                        u.Fullname,
+                        u.Username,
+                        u.ProfilePicture,
+                        following = user.Following.Any(f => f.Id == u.Id)
+                    })
+                });
+            else if (type == "chats")
+            {
+                var conversations = await _context.Conversations
+                                    .Include(c => c.Messages)
+                                    .Include(c => c.User1)
+                                    .Include(c => c.User2)
+                                    .Where(c => c.User1Id == userId || c.User2Id == userId)
+                                    .Skip(skip)
+                                    .Take(limit)
+                                    .ToListAsync();
+
+                var chatResults = conversations.Select(c =>
+                {
+                    var otherUser = c.User1Id == userId ? c.User2 : c.User1;
+                    var latestMessage = c.Messages.OrderByDescending(m => m.SentAt).FirstOrDefault();
+                    return new
+                    {
+                        otherUser.Id,
+                        otherUser.ProfilePicture,
+                        otherUser.Fullname,
+                        lastMessage = latestMessage.Content,
+                        sentAt = latestMessage.SentAt,
+                        isRead = latestMessage.IsRead
+
+                    };
+                });
+                return Ok(new
+                {
+                    message = "Chats found",
+                    page,
+                    totalPages = (int)Math.Ceiling(user.Conversations.Count / (double)limit),
+                    chats = chatResults
+                });
+            }
+
+            else if (type == "watchHistory")
+            {
+                var watchHistory = user.WatchHistory.OrderByDescending(h => h.ViewedAt)
+                                    .Take(limit)
+                                    .Skip(skip)
+                                    .ToList();
+                var PostIds = watchHistory.Select(w => w.PostId).ToList();
+
+                var post = _context.Posts.Where(p => PostIds.Contains(p.Id))
+                            .Include(p => p.User)
+                            .Include(p => p.Media);
+
+                var orderedPosts = watchHistory.Join(
+                    post,
+
+                    wh => wh.PostId,
+
+                    p => p.Id,
+
+                    (wh, p) => new
+                    {
+                        p.Id,
+                        p.User.Username,
+                        p.User.ProfilePicture,
+                        Media = p.Media.Select(m => new { m.Url, m.MediaType }),
+                        watchedAt = wh.ViewedAt
+                    }
+                );
+
+                return Ok(new
+                {
+                    message = "Watch history found",
+                    totalWatched = user.WatchHistory.Count,
+                    posts = orderedPosts,
+                    page,
+                    totalPages = (int)Math.Ceiling(user.WatchHistory.Count / (double)limit)
+                });
+                            
+            }
+            else return BadRequest(new { message = "Error" });
         }
 
         [Authorize]
@@ -226,9 +405,37 @@ namespace server
             return Ok(new { message = "user Updated", user });
         }
 
+        [Authorize]
+        [HttpPut("follow-user/{secondaryUserId}")]
+        public async Task<IActionResult> FollowUser(string secondaryUserId)
+        {
+            var primaryUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(primaryUserId))
+                return Unauthorized(new { message = "Invalid Token" });
+
+            var PrimaryUser = await _context.Users.Include(u => u.Following).FirstOrDefaultAsync(u => u.Id == primaryUserId);
+            var SecondaryUser = await _context.Users.Include(u => u.Followers).FirstOrDefaultAsync(u => u.Id == secondaryUserId);
+            if (PrimaryUser == null || SecondaryUser == null)
+                return NotFound(new { message = "users not found" });
+
+            if (PrimaryUser.Following.Any(u => u.Id == secondaryUserId))
+            {
+                PrimaryUser.Following.Remove(SecondaryUser);
+                SecondaryUser.Followers.Remove(PrimaryUser);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "user unfollowed Successfully", follow = false });
+            }
+            else
+            {
+                PrimaryUser.Following.Add(SecondaryUser);
+                SecondaryUser.Followers.Add(PrimaryUser);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "user followed Successfully", follow = true });
+            }
+            
+        }
+
     }
-
-
 
         }
 

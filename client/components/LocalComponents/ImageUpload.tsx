@@ -47,29 +47,6 @@ const ImageUploadUi = ({
     }
   };
 
-  // image upload
-  const uploadPic = async () => {
-    setLoading(true);
-    if (!image) {
-      return;
-    }
-
-    const response = await fetch(image); // Fetch the file from the local URI
-    const blob = await response.blob(); // Convert it into a Blob
-
-    const ImageRef = ref(storage, `files/${Date.now()}-image`);
-
-    try {
-      const upload = await uploadBytes(ImageRef, blob);
-      const url = await getDownloadURL(upload.ref);
-      setImageUrl(url);
-      setLoading(false);
-    } catch (error) {
-      console.log(error);
-      setLoading(false);
-    }
-  };
-
   return (
     <View
       className={`${stretch ? 'w-full' : 'w-[150px]'} border-grayscale-800 relative h-[150px] items-center justify-center gap-2 rounded-lg border-[1px] border-dashed`}>

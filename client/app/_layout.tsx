@@ -27,6 +27,9 @@ import { GeneralProvider } from '@/providers/GeneralProvider';
 import { ModalProvider, useModal } from '@/providers/ModalProvider';
 import CustomModal from '@/components/LocalComponents/CustomModal';
 import { setAndroidNavigationBar } from '@/lib/android-navigation-bar';
+import app from '@/services/firebaseconfig';
+
+app;
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,

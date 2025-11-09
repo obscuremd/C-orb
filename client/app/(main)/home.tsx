@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Image, FlatList } from 'react-native';
+import { View, Text, Pressable, Image, FlatList, ActivityIndicator } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { storyImages } from '@/lib/constants';
@@ -21,26 +21,40 @@ export default function index() {
   const [value, setValue] = useState<string>('for-you');
   const { isDarkColorScheme } = useColorScheme();
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+
   const [feedData, setFeedData] = useState<Feed[]>([]);
-  useEffect(() => {
-    async function getFeed() {
+
+  const fetchFeed = async () => {
+    try {
       const res = await getPosts('all');
-      if (res.status === 'error' && res.data === null) {
+      if (res.status === 'error' || res.data.length === 0) {
         setModalVisible(true);
         setElement(
           <CustomAlert variant="destructive" title={res.title} description={res.message} />
         );
         setPosition('start');
-        setTimeout(() => {
-          setModalVisible(false);
-        }, 5000);
+        setTimeout(() => setModalVisible(false), 5000);
       } else {
         setFeedData(res.data);
       }
+    } catch (err) {
+      console.log(err);
     }
-    getFeed();
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    fetchFeed().finally(() => setLoading(false));
   }, []);
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchFeed();
+    setRefreshing(false);
+  };
   return (
     <View className="flex-1 items-center gap-8 p-4">
       <View className="w-full gap-4">
@@ -87,37 +101,45 @@ export default function index() {
         </View>
 
         {/* Card Content */}
-        <FlatList
-          data={feedData}
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item, index) => `${item}-${index}`}
-          contentContainerStyle={{ gap: 16 }}
-          renderItem={({ item }) => (
-            <CustomCard
-              profilePicture={item.user.profilePicture}
-              image={item.postUrl}
-              name={item.location}
-              username={item.user.username}
-              description={item.description}
-              button1={
-                <Button variant={'secondary'} className="flex-row items-center gap-1">
-                  <Heart size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-                  <Text className="text-body text-primary">{item.likeCount}</Text>
-                </Button>
-              }
-              button2={
-                <Button variant={'secondary'}>
-                  <MessageCircle size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-                </Button>
-              }
-              button3={
-                <Button variant={'secondary'}>
-                  <Send size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-                </Button>
-              }
-            />
-          )}
-        />
+        {loading ? (
+          <ActivityIndicator />
+        ) : feedData.length === 0 ? (
+          <Text>No Posts found</Text>
+        ) : (
+          <FlatList
+            data={feedData}
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, index) => `${item}-${index}`}
+            contentContainerStyle={{ gap: 16, paddingBottom: 150 }}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            renderItem={({ item }) => (
+              <CustomCard
+                profilePicture={item.user.profilePicture}
+                image={item.postUrl}
+                name={item.user.username}
+                username={item.location}
+                description={item.description}
+                button1={
+                  <Button variant={'secondary'} className="flex-row items-center gap-1">
+                    <Heart size={16} color={isDarkColorScheme ? 'white' : 'black'} />
+                    <Text className="text-body text-primary">{item.likeCount}</Text>
+                  </Button>
+                }
+                button2={
+                  <Button variant={'secondary'}>
+                    <MessageCircle size={16} color={isDarkColorScheme ? 'white' : 'black'} />
+                  </Button>
+                }
+                button3={
+                  <Button variant={'secondary'}>
+                    <Send size={16} color={isDarkColorScheme ? 'white' : 'black'} />
+                  </Button>
+                }
+              />
+            )}
+          />
+        )}
       </View>
     </View>
   );
