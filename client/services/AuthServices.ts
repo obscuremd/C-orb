@@ -50,12 +50,14 @@ export async function Authenticate(
         message: result.data.message,
       };
     }
-  } catch (error) {
-    console.log(JSON.stringify(error, null, 2));
+  } catch (error: any) {
+    // console.log(JSON.stringify(error, null, 2));
+    // console.log('error message: ', error.response?.data?.message);
     return {
       status: 'error',
       title: 'Error Signing Up',
-      message: 'Seems to be an error from our end, try signing again',
+      message:
+        error.response?.data?.message || 'Seems to be an error from our end, try signing again',
     };
   }
 }
@@ -109,13 +111,14 @@ export async function VerifyOtp(
         message: result.data.message,
       };
     }
-  } catch (error) {
-    console.log(JSON.stringify(error, null, 2));
+  } catch (error: any) {
+    // console.log(JSON.stringify(error, null, 2));
 
     return {
       status: 'error',
       title: 'Error Signing Up',
-      message: 'Seems to be an error from our end, try signing again',
+      message:
+        error.response?.data?.message || 'Seems to be an error from our end, try signing again',
     };
   }
 }
@@ -168,11 +171,11 @@ export async function Register({
       };
     }
   } catch (err: any) {
-    console.log(err);
+    // console.log(err);
     return {
       status: 'error',
       title: 'Registration Failed',
-      message: 'internal server error',
+      message: err.response?.data?.message || 'internal server error',
     };
   }
 }

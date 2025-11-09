@@ -127,6 +127,7 @@ export default function index() {
                   </View>
                 ) : (
                   <CustomCard
+                    media={[]}
                     direction="row"
                     spacing="justify-between"
                     name={item.title}
@@ -153,6 +154,7 @@ export default function index() {
             <View className="gap-2">
               {authSettings.map((item, index) => (
                 <CustomCard
+                  media={[]}
                   direction="row"
                   spacing="justify-between"
                   name={item.title}
@@ -177,6 +179,7 @@ export default function index() {
             {/* contents */}
             <View className="gap-2">
               <CustomCard
+                media={[]}
                 direction="row"
                 spacing="justify-between"
                 name="Log Out"
@@ -188,6 +191,7 @@ export default function index() {
                 }
               />
               <CustomCard
+                media={[]}
                 direction="row"
                 spacing="justify-between"
                 name="Delete Account"

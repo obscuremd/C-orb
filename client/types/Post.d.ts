@@ -1,3 +1,8 @@
+interface postMedia {
+  url: string;
+  mediaType: string;
+}
+
 interface Post {
   Description: string;
   PostUrl: string;
@@ -7,12 +12,14 @@ interface Post {
 
 interface Feed {
   user: {
+    id: string;
+    fullname: string;
     username: string;
     profilePicture: string;
   };
   id: number;
   description: string;
-  postUrl: string;
+  media: postMedia[];
   location: string;
   createdAt: string; // ISO timestamp from backend
   commentCount: number;

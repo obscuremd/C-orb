@@ -9,6 +9,7 @@ import { useColorScheme } from '@/lib/useColorScheme';
 import { getPosts } from '@/services/PostServices';
 import { useModal } from '@/providers/ModalProvider';
 import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert';
+import { useRouter } from 'expo-router';
 
 const tabs = [
   { label: 'For You', value: 'for-you' },
@@ -17,6 +18,7 @@ const tabs = [
 ];
 
 export default function index() {
+  const router = useRouter();
   const { setModalVisible, setElement, setPosition } = useModal();
   const [value, setValue] = useState<string>('for-you');
   const { isDarkColorScheme } = useColorScheme();
@@ -39,6 +41,7 @@ export default function index() {
         setTimeout(() => setModalVisible(false), 5000);
       } else {
         setFeedData(res.data);
+        console.log('data:', res.data[0].user);
       }
     } catch (err) {
       console.log(err);
@@ -56,7 +59,7 @@ export default function index() {
     setRefreshing(false);
   };
   return (
-    <View className="flex-1 items-center gap-8 p-4">
+    <View className="items-center flex-1 gap-8 p-4">
       <View className="w-full gap-4">
         {/* Image List */}
         <FlatList
@@ -76,7 +79,7 @@ export default function index() {
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
-              <Image source={{ uri: item }} className="h-10 w-10 rounded-full" />
+              <Image source={{ uri: item }} className="w-10 h-10 rounded-full" />
             </LinearGradient>
           )}
         />
@@ -87,6 +90,7 @@ export default function index() {
           className="inline-flex flex-row gap-2 rounded-lg border-[1px] border-border p-1">
           {tabs.map((tab) => (
             <Button
+              size={'sm'}
               key={tab.value}
               variant={value === tab.value ? 'secondary' : 'ghost'}
               onPress={() => setValue(tab.value)}>
@@ -115,24 +119,33 @@ export default function index() {
             onRefresh={onRefresh}
             renderItem={({ item }) => (
               <CustomCard
+                headerPress={() =>
+                  router.push({
+                    pathname: '/(main)/users/[userId]',
+                    params: { userId: item.user.id },
+                  })
+                }
                 profilePicture={item.user.profilePicture}
-                image={item.postUrl}
+                media={item.media}
                 name={item.user.username}
                 username={item.location}
                 description={item.description}
                 button1={
-                  <Button variant={'secondary'} className="flex-row items-center gap-1">
+                  <Button
+                    variant={'ghost'}
+                    size={'icon'}
+                    className="flex-row items-center gap-1 p-0">
                     <Heart size={16} color={isDarkColorScheme ? 'white' : 'black'} />
                     <Text className="text-body text-primary">{item.likeCount}</Text>
                   </Button>
                 }
                 button2={
-                  <Button variant={'secondary'}>
+                  <Button variant={'ghost'} size={'icon'}>
                     <MessageCircle size={16} color={isDarkColorScheme ? 'white' : 'black'} />
                   </Button>
                 }
                 button3={
-                  <Button variant={'secondary'}>
+                  <Button variant={'ghost'} size={'icon'}>
                     <Send size={16} color={isDarkColorScheme ? 'white' : 'black'} />
                   </Button>
                 }

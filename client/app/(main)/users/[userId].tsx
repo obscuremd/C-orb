@@ -14,15 +14,18 @@ import CustomCard from '@/components/ui/customCard';
 import { Button } from '@/components/ui/button';
 import { Globe, Heart, MapPin, MessageCircle, Send } from 'lucide-react-native';
 import { useColorScheme } from '@/lib/useColorScheme';
-import { faker } from '@faker-js/faker';
 import { Separator } from '@/components/ui/separator';
 import GradientButton from '@/components/LocalComponents/GradientButton';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { getPosts } from '@/services/PostServices';
 import { useModal } from '@/providers/ModalProvider';
 import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert';
 import { GetUser } from '@/services/AuthServices';
 
+export const unstable_settings = {
+  // Disables tab bar on this screen
+  tabBarStyle: { display: 'none' },
+};
 const tabs = [
   { label: '23 Posts', value: '23 Posts' },
   { label: '10 Tagged', value: '10 Tagged' },
@@ -30,6 +33,7 @@ const tabs = [
 ];
 
 export default function index() {
+  const { userId } = useLocalSearchParams();
   const { setModalVisible, setElement, setPosition } = useModal();
 
   const [value, setValue] = useState<string>('23 Posts');
@@ -79,7 +83,7 @@ export default function index() {
   };
 
   return (
-    <View className="items-center flex-1 gap-8 p-4">
+    <View className="flex-1 items-center gap-8 p-4">
       <View className="w-full gap-4">
         <Image
           source={{
@@ -98,14 +102,14 @@ export default function index() {
           style={styles.ImageGradient}
         />
         {/* profile */}
-        <View className="flex-row items-center justify-between w-full">
+        <View className="w-full flex-row items-center justify-between">
           <View className="flex-row items-center gap-1">
             <Image
               source={user?.profilePicture ? { uri: user.profilePicture } : undefined}
-              className="w-10 h-10 rounded-full"
+              className="h-10 w-10 rounded-full"
             />
             <View className="gap-1">
-              <Text className="font-bold text-body text-primary">{user?.email}</Text>
+              <Text className="text-body font-bold text-primary">{user?.email}</Text>
               <Text className="text-caption text-primary">@{user?.username}</Text>
             </View>
           </View>
@@ -117,12 +121,12 @@ export default function index() {
         {/* profile stats */}
         <View className="flex-row items-center gap-2">
           <View className="flex-row items-center gap-2">
-            <Text className="font-bold text-body text-primary">{user?.followersCount}</Text>
+            <Text className="text-body font-bold text-primary">{user?.followersCount}</Text>
             <Text className="text-caption text-primary">Followers</Text>
           </View>
           <Separator orientation="vertical" />
           <View className="flex-row items-center gap-2">
-            <Text className="font-bold text-body text-primary">{user?.followingCount}</Text>
+            <Text className="text-body font-bold text-primary">{user?.followingCount}</Text>
             <Text className="text-caption text-primary">Followers</Text>
           </View>
         </View>
@@ -134,14 +138,14 @@ export default function index() {
         <View className="flex-row items-center gap-2">
           <View className="flex-row items-center gap-2">
             <MapPin size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-            <Text className="capitalize text-caption text-primary">
+            <Text className="text-caption capitalize text-primary">
               {user?.location || 'Add Location'}
             </Text>
           </View>
           <Separator orientation="vertical" />
           <View className="flex-row items-center gap-2">
             <Globe size={16} color={'#60a5fa'} />
-            <Text className="text-blue-400 text-caption">{user?.website || '+ Add Link'}</Text>
+            <Text className="text-caption text-blue-400">{user?.website || '+ Add Link'}</Text>
           </View>
         </View>
 

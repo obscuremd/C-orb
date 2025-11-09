@@ -12,6 +12,9 @@ import Otp from '@/components/LocalComponents/ModalElements/Otp';
 import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert';
 import { Authenticate } from '@/services/AuthServices';
 import { useGen } from '@/providers/GeneralProvider';
+import { Label } from '@/components/ui/label';
+import { BadgeInfo } from 'lucide-react-native';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function index() {
   const [email, setEmail] = useState('');
@@ -71,35 +74,43 @@ export default function index() {
           end={{ x: 0.5, y: 1 }}
           style={styles.ImageGradient}
         />
-        <Text className="text-title1 font-bold text-primary">C-Orb</Text>
-        <Text className="text-title2 font-light text-primary">
+        <Text className="font-bold text-title1 text-primary">C-Orb</Text>
+        <Text className="font-light text-title2 text-primary">
           Join C-Orb today and discover a community like no other
         </Text>
       </View>
       <View className="gap-4">
         <Input
           placeholder="Email"
-          aria-labelledby="inputLabel"
-          aria-errormessage="inputError"
-          onChangeText={(text) => setEmail(text)}
+          value={email}
+          onChangeText={(text) => {
+            setEmail(text);
+          }}
         />
-        <Input
-          placeholder="Password"
-          secureTextEntry
-          aria-labelledby="inputLabel"
-          aria-errormessage="inputError"
-          onChangeText={(text) => setPassword(text)}
-        />
+
+        <View>
+          <Input
+            id="password"
+            placeholder="Password"
+            secureTextEntry
+            aria-labelledby="inputLabel"
+            aria-errormessage="inputError"
+            onChangeText={(text) => setPassword(text)}
+          />
+        </View>
       </View>
       <View className="">
         {loading ? (
-          <ActivityIndicator />
+          <Button disabled className="flex-row">
+            <ActivityIndicator />
+            <Text>...Loading</Text>
+          </Button>
         ) : (
           <GradientButton text="Continue" onClick={() => handleAuth()} />
         )}
       </View>
       <Link href={'/auth/forgot_password'}>
-        <Text className="text-title2 font-semibold text-primary">Forgot Password?</Text>
+        <Text className="font-semibold text-title2 text-primary">Forgot Password?</Text>
       </Link>
 
       {/* <View className="flex-row items-center justify-center w-full gap-4">

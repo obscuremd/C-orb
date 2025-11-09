@@ -142,6 +142,7 @@ namespace server
                 {
                     User = new
                     {
+                        p.User.Id,
                         p.User.Fullname,
                         p.User.Username,
                         p.User.ProfilePicture
@@ -237,6 +238,7 @@ namespace server
                 {
                     User = new
                     {
+                        p.User.Id,
                         p.User.Username,
                         p.User.ProfilePicture
                     },

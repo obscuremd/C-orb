@@ -77,7 +77,7 @@ export default function CreatePost() {
             <ImageIcon />
           </Button>
         ) : (
-          <Image source={{ uri: image }} className="h-20 w-20" />
+          <Image source={{ uri: image }} className="w-20 h-20" />
         )}
         <Input
           placeholder="Description (min 10 chars)"
