@@ -185,6 +185,7 @@ export async function GetUser(): Promise<{ status: boolean; user?: User }> {
   if (!token) {
     return { status: false };
   }
+  console.log(token);
   try {
     const decoded = jwtDecode<JwtPayload>(token);
     const now = Math.floor(Date.now() / 1000);

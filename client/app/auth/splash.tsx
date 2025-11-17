@@ -40,7 +40,7 @@ export default function Welcome() {
               resizeMode="cover"
             />
             <View className="gap-4">
-              <Text className="text-h5 text-center font-bold text-foreground">{item.title}</Text>
+              <Text className="text-h2 text-center font-bold text-foreground">{item.title}</Text>
               <Text className="text-T2 font-BaiJamjureeMedium text-center text-muted-foreground">
                 {item.description}
               </Text>
@@ -50,6 +50,7 @@ export default function Welcome() {
       </Swiper>
       <View className="pb-24 pt-12">
         <GradientButton
+          width={'100%'}
           text={isLastIndex ? 'Get Started' : 'Next'}
           onClick={() => {
             if (isLastIndex) {

@@ -41,7 +41,7 @@ export default function index() {
         setTimeout(() => setModalVisible(false), 5000);
       } else {
         setFeedData(res.data);
-        console.log('data:', res.data[0].user);
+        // console.log('data:', res.data[0].user);
       }
     } catch (err) {
       console.log(err);
@@ -59,7 +59,7 @@ export default function index() {
     setRefreshing(false);
   };
   return (
-    <View className="items-center flex-1 gap-8 p-4">
+    <View className="flex-1 items-center gap-8 p-4">
       <View className="w-full gap-4">
         {/* Image List */}
         <FlatList
@@ -79,7 +79,7 @@ export default function index() {
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
-              <Image source={{ uri: item }} className="w-10 h-10 rounded-full" />
+              <Image source={{ uri: item }} className="h-10 w-10 rounded-full" />
             </LinearGradient>
           )}
         />

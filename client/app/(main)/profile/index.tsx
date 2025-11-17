@@ -23,12 +23,6 @@ import { useModal } from '@/providers/ModalProvider';
 import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert';
 import { GetUser } from '@/services/AuthServices';
 
-const tabs = [
-  { label: '23 Posts', value: '23 Posts' },
-  { label: '10 Tagged', value: '10 Tagged' },
-  { label: '24 Wishlists', value: '24 Wishlists' },
-];
-
 export default function index() {
   const { setModalVisible, setElement, setPosition } = useModal();
 
@@ -44,6 +38,7 @@ export default function index() {
   const [user, setUser] = useState<User | undefined>(undefined);
 
   const fetchFeed = async () => {
+    setLoading(true);
     try {
       const res = await getPosts('mine');
       if (res.status === 'error' || res.data.length === 0) {
@@ -58,6 +53,8 @@ export default function index() {
       }
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -78,8 +75,18 @@ export default function index() {
     setRefreshing(false);
   };
 
+  const tabs = [
+    { label: `${user?.postCount} Posts`, value: '23 Posts' },
+    { label: '10 Tagged', value: '10 Tagged' },
+    { label: '24 Wishlists', value: '24 Wishlists' },
+  ];
+
+  if (loading) {
+    return <ActivityIndicator />;
+  }
+
   return (
-    <View className="items-center flex-1 gap-8 p-4">
+    <View className="flex-1 items-center gap-8 p-4">
       <View className="w-full gap-4">
         <Image
           source={{
@@ -98,14 +105,14 @@ export default function index() {
           style={styles.ImageGradient}
         />
         {/* profile */}
-        <View className="flex-row items-center justify-between w-full">
+        <View className="w-full flex-row items-center justify-between">
           <View className="flex-row items-center gap-1">
             <Image
               source={user?.profilePicture ? { uri: user.profilePicture } : undefined}
-              className="w-10 h-10 rounded-full"
+              className="h-10 w-10 rounded-full"
             />
             <View className="gap-1">
-              <Text className="font-bold text-body text-primary">{user?.email}</Text>
+              <Text className="text-body font-bold text-primary">{user?.email}</Text>
               <Text className="text-caption text-primary">@{user?.username}</Text>
             </View>
           </View>
@@ -117,12 +124,12 @@ export default function index() {
         {/* profile stats */}
         <View className="flex-row items-center gap-2">
           <View className="flex-row items-center gap-2">
-            <Text className="font-bold text-body text-primary">{user?.followersCount}</Text>
+            <Text className="text-body font-bold text-primary">{user?.followersCount}</Text>
             <Text className="text-caption text-primary">Followers</Text>
           </View>
           <Separator orientation="vertical" />
           <View className="flex-row items-center gap-2">
-            <Text className="font-bold text-body text-primary">{user?.followingCount}</Text>
+            <Text className="text-body font-bold text-primary">{user?.followingCount}</Text>
             <Text className="text-caption text-primary">Followers</Text>
           </View>
         </View>
@@ -134,14 +141,14 @@ export default function index() {
         <View className="flex-row items-center gap-2">
           <View className="flex-row items-center gap-2">
             <MapPin size={16} color={isDarkColorScheme ? 'white' : 'black'} />
-            <Text className="capitalize text-caption text-primary">
+            <Text className="text-caption capitalize text-primary">
               {user?.location || 'Add Location'}
             </Text>
           </View>
           <Separator orientation="vertical" />
           <View className="flex-row items-center gap-2">
             <Globe size={16} color={'#60a5fa'} />
-            <Text className="text-blue-400 text-caption">{user?.website || '+ Add Link'}</Text>
+            <Text className="text-caption text-blue-400">{user?.website || '+ Add Link'}</Text>
           </View>
         </View>
 

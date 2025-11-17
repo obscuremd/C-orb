@@ -1,45 +1,54 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Image as ImageIcon } from 'lucide-react-native';
-import { Image, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useModal } from '@/providers/ModalProvider';
 import { Input } from '@/components/ui/input';
 import { createPost } from '@/services/PostServices';
 import CustomAlert from './CustomAlert';
+import { useColorScheme } from '@/lib/useColorScheme';
 
 export default function CreatePost() {
-  const [image, setImage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
+
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
   const { setModalVisible, setElement, setPosition } = useModal();
 
   const [loading, setLoading] = useState(false);
 
-  // image picker
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
+      allowsMultipleSelection: true,
       quality: 1,
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
-      console.log(result);
-    } else {
-      alert('You did not select any image.');
+      const selected = result.assets.map((a) => a.uri);
+
+      // If total exceeds 5, block it
+      if (selected.length + images.length > 5) {
+        alert('You can select a maximum of 5 images.');
+        return;
+      }
+
+      setImages((prev) => [...prev, ...selected]); // append new images
     }
   };
-  const isDisabled = loading || !image || description.length < 10 || location.length < 5;
+
+  const isDisabled =
+    loading || images.length === 0 || description.length < 10 || location.length < 5;
+  const { isDarkColorScheme } = useColorScheme();
 
   async function makePost() {
     setLoading(true);
     try {
       const res = await createPost({
         Description: description,
-        Post: image!, // ✅ MUST pass the image uri here
+        Posts: images, // ✅ MUST pass the image uri here
         Location: location,
         TagIds: [1, 2, 3, 4, 5, 6], // ✅
       });
@@ -55,7 +64,7 @@ export default function CreatePost() {
         setElement(<CustomAlert variant="success" title={res.title} description={res.message} />);
         setPosition('start');
         setTimeout(() => setModalVisible(false), 5000);
-        setImage(null);
+        setImages([]);
         setDescription('');
         setLocation('');
       }
@@ -72,18 +81,20 @@ export default function CreatePost() {
         </Text>
       </CardHeader>
       <CardContent className="gap-2">
-        {image === null ? (
-          <Button onPress={pickImageAsync}>
-            <ImageIcon />
-          </Button>
+        {images.length === 0 ? (
+          <Pressable
+            className="h-[150px] w-full items-center justify-center rounded-lg border border-dashed border-primary"
+            onPress={pickImageAsync}>
+            <ImageIcon color={isDarkColorScheme ? 'white' : 'black'} size={24} />
+          </Pressable>
         ) : (
-          <Image source={{ uri: image }} className="w-20 h-20" />
+          <View className="flex-row flex-wrap gap-2">
+            {images.map((img, idx) => (
+              <Image key={idx} source={{ uri: img }} className="h-20 w-20 rounded-md" />
+            ))}
+          </View>
         )}
-        <Input
-          placeholder="Description (min 10 chars)"
-          value={description}
-          onChangeText={setDescription}
-        />
+        <Input placeholder="what's happening ?" value={description} onChangeText={setDescription} />
         <Input placeholder="Location" onChangeText={setLocation} />
       </CardContent>
       <CardFooter className="w-full gap-2">

@@ -160,8 +160,22 @@ namespace server
             var totalPosts = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalPosts / (double)limit);
 
-            if (posts == null || posts.Count == 0)
+            if (posts == null)
                 return BadRequest(new { message = "posts not found" });
+
+            // user exists but has no posts
+            if (posts.Count == 0)
+            {
+                return Ok(new
+                {
+                    message = "User has no posts",
+                    page,
+                    totalPages = 0,
+                    totalPosts = 0,
+                    posts = new List<object>() // empty array
+                });
+            }
+
 
             return Ok(new { message = "posts found", page, totalPages, totalPosts, posts });
         }
@@ -308,7 +322,8 @@ namespace server
         [HttpPut("like/{postId}")]
         public async Task<IActionResult> LikePost(int postId, [FromBody] bool liked)
         {
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "Invalid Token" });
 

@@ -74,8 +74,8 @@ export default function index() {
           end={{ x: 0.5, y: 1 }}
           style={styles.ImageGradient}
         />
-        <Text className="font-bold text-title1 text-primary">C-Orb</Text>
-        <Text className="font-light text-title2 text-primary">
+        <Text className="text-title1 font-bold text-primary">C-Orb</Text>
+        <Text className="text-title2 font-light text-primary">
           Join C-Orb today and discover a community like no other
         </Text>
       </View>
@@ -106,11 +106,11 @@ export default function index() {
             <Text>...Loading</Text>
           </Button>
         ) : (
-          <GradientButton text="Continue" onClick={() => handleAuth()} />
+          <GradientButton width={'100%'} text="Continue" onClick={() => handleAuth()} />
         )}
       </View>
       <Link href={'/auth/forgot_password'}>
-        <Text className="font-semibold text-title2 text-primary">Forgot Password?</Text>
+        <Text className="text-title2 font-semibold text-primary">Forgot Password?</Text>
       </Link>
 
       {/* <View className="flex-row items-center justify-center w-full gap-4">

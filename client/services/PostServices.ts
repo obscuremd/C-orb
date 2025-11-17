@@ -1,19 +1,17 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { UploadImage } from './GeneralServices';
+import { UploadFiles } from './GeneralServices';
 
 const url = 'https://c-orb.onrender.com/api/Social';
 
-import { Alert } from 'react-native';
-
 export async function createPost({
   Description,
-  Post,
+  Posts,
   Location,
   TagIds,
 }: {
   Description: string;
-  Post: string;
+  Posts: Array<string>;
   Location: string;
   TagIds: Array<number>;
 }): Promise<{ status: 'success' | 'error'; title: string; message: string; data: Post | null }> {
@@ -23,7 +21,7 @@ export async function createPost({
   }
 
   // ✅ Required field checks
-  if (!Description || !Post || !Location) {
+  if (!Description || Posts.length === 0 || !Location) {
     return {
       status: 'error',
       title: 'Missing Fields',
@@ -61,7 +59,7 @@ export async function createPost({
   }
 
   // ✅ Upload Image
-  const UploadedImage = await UploadImage(Post);
+  const UploadedImage = await UploadFiles(Posts);
 
   if (UploadedImage.status === 'error') {
     return {
@@ -72,12 +70,15 @@ export async function createPost({
     };
   }
 
-  const PostUrl = UploadedImage.data;
+  const media: postMedia[] = UploadedImage.data.map((item) => ({
+    url: item.url,
+    mediaType: item.type,
+  }));
 
   try {
     const response = await axios.post(
       `${url}/create-post`,
-      { Description, PostUrl, Location, TagIds },
+      { Description, media, Location, TagIds, postType: 'post' },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -93,6 +94,7 @@ export async function createPost({
       data: response.data.post,
     };
   } catch (error: any) {
+    console.log(JSON.stringify(error, null, 2));
     return {
       status: 'error',
       title: 'Error creating post',
@@ -106,13 +108,15 @@ export async function getPosts(
   param: string
 ): Promise<{ status: 'success' | 'error'; title: string; message: string; data: Feed[] }> {
   const token = await SecureStore.getItemAsync('UserToken');
-  if (!token)
+  if (!token || token === 'null') {
+    console.log('⚠️ TOKEN MISSING:', token);
     return {
       status: 'error',
       title: 'Invalid Token',
       message: 'Token Not found',
       data: [],
     };
+  }
   try {
     const response = await axios.get(`${url}/get-posts?param=${param}`, {
       headers: {
@@ -128,7 +132,7 @@ export async function getPosts(
       data: response.data.posts,
     };
   } catch (error: any) {
-    console.log(JSON.stringify(error, null, 2));
+    // console.log(JSON.stringify(error, null, 2));
     return {
       status: 'error',
       title: 'Error getting post',
