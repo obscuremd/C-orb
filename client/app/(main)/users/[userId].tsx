@@ -49,7 +49,7 @@ export default function index() {
 
   const fetchFeed = async () => {
     try {
-      const res = await getPosts('mine');
+      const res = await getPosts(`user:${userId}`);
       if (res.status === 'error' || res.data.length === 0) {
         setModalVisible(true);
         setElement(

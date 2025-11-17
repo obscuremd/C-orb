@@ -227,7 +227,37 @@ namespace server
                 if (requestedUser == null)
                     return NotFound(new { message = "Requested User not found" });
 
-                if (type == "followings")
+                if(type == "user")
+                {
+                    return Ok(new
+                    {
+                        message = $"user {requestedUser.Username} found",
+                        reqUser = new
+                        {
+                            requestedUser.Id,
+                            requestedUser.Username,
+                            requestedUser.Fullname,
+                            requestedUser.Email,
+                            requestedUser.PhoneNumber,
+                            requestedUser.ProfilePicture,
+                            requestedUser.CoverPicture,
+                            requestedUser.Bio,
+                            requestedUser.Location,
+                            requestedUser.BadgePoints,
+                            requestedUser.CreatedAt,
+                            // Tags = requestedUser.Tags.Select(t => new   // 👈 flatten tags
+                            // {
+                            //     t.Id,
+                            //     t.Name
+                            // }),
+                            postCount = requestedUser.Posts.Count(),
+                            followersCount = requestedUser.Followers.Count(),
+                            followingCount = requestedUser.Following.Count()
+                        }
+                    });
+                }
+
+                else if (type == "followings")
                     return Ok(new
                     {
                         message = $"user {requestedUser.Username} followings found",
