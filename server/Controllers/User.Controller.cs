@@ -188,7 +188,11 @@ namespace server
                     user.Location,
                     user.BadgePoints,
                     user.CreatedAt,
-                    user.Tags,
+                    Tags = user.Tags.Select(t => new   // 👈 flatten tags
+                    {
+                        t.Id,
+                        t.Name
+                    }),
                     postCount = user.Posts.Count(),
                     followersCount = user.Followers.Count(),
                     followingCount = user.Following.Count()

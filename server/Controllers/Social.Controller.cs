@@ -152,6 +152,7 @@ namespace server
                     Media = p.Media.Select(m => new { m.Url, m.MediaType }),
                     p.Location,
                     p.CreatedAt,
+                    isLiked = p.Engagement.Where(e => e.UserId == userId && e.Liked),
                     commentCount = p.Comments.Count(),
                     likeCount = p.Engagement.Where(e => e.Liked == true).Count(),
                     views = p.UserId == userId ? p.Engagement.Count() : (int?)null,

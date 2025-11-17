@@ -88,7 +88,10 @@ export async function VerifyOtp(
       if (result.data.hasAccount) {
         try {
           await SecureStore.setItemAsync('UserToken', result.data.token);
+          const storedToken = await SecureStore.getItemAsync('UserToken');
+          console.log('Stored token:', storedToken); // 👈 CONFIRM IT'S SAVED
         } catch (error) {
+          console.log(error);
           return {
             status: 'error',
             title: 'Error',
@@ -185,7 +188,7 @@ export async function GetUser(): Promise<{ status: boolean; user?: User }> {
   if (!token) {
     return { status: false };
   }
-  console.log(token);
+  console.log('user token: ', token);
   try {
     const decoded = jwtDecode<JwtPayload>(token);
     const now = Math.floor(Date.now() / 1000);

@@ -41,7 +41,7 @@ export default function index() {
     setLoading(true);
     try {
       const res = await getPosts('mine');
-      if (res.status === 'error' || res.data.length === 0) {
+      if (res.status === 'error') {
         setModalVisible(true);
         setElement(
           <CustomAlert variant="destructive" title={res.title} description={res.message} />
@@ -65,8 +65,8 @@ export default function index() {
 
   useEffect(() => {
     setLoading(true);
-    fetchFeed().finally(() => setLoading(false));
     fetchUser();
+    fetchFeed().finally(() => setLoading(false));
   }, []);
 
   const onRefresh = async () => {

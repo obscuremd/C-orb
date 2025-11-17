@@ -140,8 +140,12 @@ export default function index() {
                   </Button>
                 }
                 button2={
-                  <Button variant={'ghost'} size={'icon'}>
+                  <Button
+                    variant={'ghost'}
+                    size={'icon'}
+                    className="flex-row items-center gap-1 p-0">
                     <MessageCircle size={16} color={isDarkColorScheme ? 'white' : 'black'} />
+                    <Text className="text-body text-primary">{item.commentCount}</Text>
                   </Button>
                 }
                 button3={
