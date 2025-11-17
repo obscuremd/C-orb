@@ -41,7 +41,7 @@ export default function index() {
         setTimeout(() => setModalVisible(false), 5000);
       } else {
         setFeedData(res.data);
-        // console.log('data:', res.data[0].user);
+        console.log('data:', JSON.stringify(res.data, null, 2));
       }
     } catch (err) {
       console.log(err);
@@ -135,7 +135,10 @@ export default function index() {
                     variant={'ghost'}
                     size={'icon'}
                     className="flex-row items-center gap-1 p-0">
-                    <Heart size={16} color={isDarkColorScheme ? 'white' : 'black'} />
+                    <Heart
+                      size={16}
+                      color={item.isLiked ? 'red' : isDarkColorScheme ? 'white' : 'black'}
+                    />
                     <Text className="text-body text-primary">{item.likeCount}</Text>
                   </Button>
                 }
