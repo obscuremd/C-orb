@@ -22,9 +22,11 @@ import { getPosts } from '@/services/PostServices';
 import { useModal } from '@/providers/ModalProvider';
 import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert';
 import { GetUser } from '@/services/AuthServices';
+import { useGen } from '@/providers/GeneralProvider';
 
 export default function index() {
   const { setModalVisible, setElement, setPosition } = useModal();
+  const { user } = useGen();
 
   const [value, setValue] = useState<string>('23 Posts');
   const { isDarkColorScheme } = useColorScheme();
@@ -34,8 +36,6 @@ export default function index() {
   const [loading, setLoading] = useState(false);
 
   const [feedData, setFeedData] = useState<Feed[]>([]);
-
-  const [user, setUser] = useState<User | undefined>(undefined);
 
   const fetchFeed = async () => {
     setLoading(true);
@@ -58,14 +58,8 @@ export default function index() {
     }
   };
 
-  async function fetchUser() {
-    const response = await GetUser();
-    setUser(response.user);
-  }
-
   useEffect(() => {
     setLoading(true);
-    fetchUser();
     fetchFeed().finally(() => setLoading(false));
   }, []);
 

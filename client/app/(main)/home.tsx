@@ -20,6 +20,7 @@ import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert'
 import { useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import { useGen } from '@/providers/GeneralProvider';
 
 const tabs = [
   { label: 'For You', value: 'for-you' },
@@ -30,6 +31,7 @@ const tabs = [
 export default function index() {
   const router = useRouter();
   const { setModalVisible, setElement, setPosition } = useModal();
+  const { user } = useGen();
   const [value, setValue] = useState<string>('for-you');
   const { isDarkColorScheme } = useColorScheme();
 
@@ -51,7 +53,7 @@ export default function index() {
         setTimeout(() => setModalVisible(false), 5000);
       } else {
         setFeedData(res.data);
-        console.log('data:', JSON.stringify(res.data, null, 2));
+        // console.log('data:', JSON.stringify(res.data, null, 2));
       }
     } catch (err) {
       console.log(err);
@@ -71,6 +73,17 @@ export default function index() {
 
   // ref
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  function handleNavigation(id: string) {
+    if (user?.id === id) {
+      router.push('/(main)/profile');
+    } else {
+      router.push({
+        pathname: '/(main)/users/[userId]',
+        params: { userId: id },
+      });
+    }
+  }
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -134,12 +147,7 @@ export default function index() {
               onRefresh={onRefresh}
               renderItem={({ item }) => (
                 <CustomCard
-                  headerPress={() =>
-                    router.push({
-                      pathname: '/(main)/users/[userId]',
-                      params: { userId: item.user.id },
-                    })
-                  }
+                  headerPress={() => handleNavigation(item.user.id)}
                   profilePicture={item.user.profilePicture}
                   media={item.media}
                   name={item.user.username}

@@ -20,17 +20,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { getPosts } from '@/services/PostServices';
 import { useModal } from '@/providers/ModalProvider';
 import CustomAlert from '@/components/LocalComponents/ModalElements/CustomAlert';
-import { GetUser } from '@/services/AuthServices';
+import * as SecureStore from 'expo-secure-store';
+import axios from 'axios';
 
 export const unstable_settings = {
   // Disables tab bar on this screen
   tabBarStyle: { display: 'none' },
 };
-const tabs = [
-  { label: '23 Posts', value: '23 Posts' },
-  { label: '10 Tagged', value: '10 Tagged' },
-  { label: '24 Wishlists', value: '24 Wishlists' },
-];
 
 export default function index() {
   const { userId } = useLocalSearchParams();
@@ -50,7 +46,7 @@ export default function index() {
   const fetchFeed = async () => {
     try {
       const res = await getPosts(`user:${userId}`);
-      if (res.status === 'error' || res.data.length === 0) {
+      if (res.status === 'error') {
         setModalVisible(true);
         setElement(
           <CustomAlert variant="destructive" title={res.title} description={res.message} />
@@ -66,21 +62,56 @@ export default function index() {
   };
 
   async function fetchUser() {
-    const response = await GetUser();
-    setUser(response.user);
+    const token = await SecureStore.getItemAsync('UserToken');
+    if (!token) {
+      return;
+    }
+
+    try {
+      const result = await axios.get(
+        `https://c-orb.onrender.com/api/User/get/user?queryUserId=${userId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log('other user:', JSON.stringify(result.data.reqUser, null, 2));
+      if (result.status === 200) {
+        setUser(result.data.reqUser);
+      }
+    } catch (error: any) {
+      setModalVisible(true);
+      setElement(
+        <CustomAlert
+          variant="destructive"
+          title={'Error getting user'}
+          description={error.response?.data?.message}
+        />
+      );
+      setPosition('start');
+      setTimeout(() => setModalVisible(false), 5000);
+    }
   }
 
   useEffect(() => {
     setLoading(true);
-    fetchFeed().finally(() => setLoading(false));
     fetchUser();
-  }, []);
+    fetchFeed().finally(() => setLoading(false));
+  }, [userId]);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchFeed();
     setRefreshing(false);
   };
+
+  if (loading) {
+    return <ActivityIndicator />;
+  }
+
+  const tabs = [
+    { label: `${user?.postCount} Posts`, value: '23 Posts' },
+    { label: '10 Tagged', value: '10 Tagged' },
+  ];
 
   return (
     <View className="flex-1 items-center gap-8 p-4">
@@ -114,7 +145,7 @@ export default function index() {
             </View>
           </View>
           <Button variant="secondary" onPress={() => router.push('/(main)/profile/settings')}>
-            <Text className="text-primary">Profile Settings</Text>
+            <Text className="text-primary">Follow</Text>
           </Button>
         </View>
 
@@ -145,7 +176,7 @@ export default function index() {
           <Separator orientation="vertical" />
           <View className="flex-row items-center gap-2">
             <Globe size={16} color={'#60a5fa'} />
-            <Text className="text-caption text-blue-400">{user?.website || '+ Add Link'}</Text>
+            <Text className="text-caption text-blue-400">{user?.website || 'No Website'}</Text>
           </View>
         </View>
 

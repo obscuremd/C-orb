@@ -223,7 +223,11 @@ namespace server
 
             if (queryUserId != userId)
             {
-                var requestedUser = await _context.Users.Include(u => u.Followers).Include(u => u.Following).FirstOrDefaultAsync(u => u.Id == queryUserId);
+                var requestedUser = await _context.Users
+                                            .Include(u => u.Followers)
+                                            .Include(u => u.Following)
+                                            .Include(u => u.Posts)
+                                            .FirstOrDefaultAsync(u => u.Id == queryUserId);
                 if (requestedUser == null)
                     return NotFound(new { message = "Requested User not found" });
 
@@ -245,11 +249,7 @@ namespace server
                             requestedUser.Location,
                             requestedUser.BadgePoints,
                             requestedUser.CreatedAt,
-                            // Tags = requestedUser.Tags.Select(t => new   // 👈 flatten tags
-                            // {
-                            //     t.Id,
-                            //     t.Name
-                            // }),
+                            isFollowing =requestedUser.Followers.Any(u => u.Id == userId),
                             postCount = requestedUser.Posts.Count(),
                             followersCount = requestedUser.Followers.Count(),
                             followingCount = requestedUser.Following.Count()

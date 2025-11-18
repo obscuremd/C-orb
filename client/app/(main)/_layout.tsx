@@ -4,12 +4,25 @@ import { Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Header } from '@/components/LocalComponents/main/Header';
 import { useColorScheme } from '@/lib/useColorScheme';
+import { GetUser } from '@/services/AuthServices';
+import { useGen } from '@/providers/GeneralProvider';
+import { useEffect } from 'react';
 
 const GITHUB_AVATAR_URI =
   'https://img.freepik.com/premium-vector/avatar-profile-icon-flat-style-male-user-profile-vector-illustration-isolated-background-man-profile-sign-business-concept_157943-38764.jpg?semt=ais_hybrid';
 
 export default function () {
+  const { setUser } = useGen();
   const { isDarkColorScheme } = useColorScheme();
+
+  async function fetchUser() {
+    const response = await GetUser();
+    setUser(response.user);
+  }
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   return (
     <SafeAreaView className="flex-1">
